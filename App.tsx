@@ -5,24 +5,36 @@ import Input from './components/ui/Input';
 import Card from './components/ui/Card';
 import SunIcon from './components/icons/SunIcon';
 import MoonIcon from './components/icons/MoonIcon';
+import Loader from 'react-loaders';
 
-/** Base da API:
- *  - Produção (Vercel): defina VITE_API_BASE = https://server-simulador-de-vendas-v3.onrender.com
- *  - Dev local: deixe vazio e use proxy do Vite se quiser
- */
-const API_BASE = import.meta.env.VITE_API_BASE || 'https://server-simulador-de-vendas-v3.onrender.com';
+const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
   return fetch(url, {
-    credentials: 'include', // envia/recebe cookie httpOnly
+    credentials: 'include',
     headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     ...init
   });
 }
 
-/* ===================== Login ===================== */
-const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+/* ---------- UI: Overlay de carregamento ---------- */
+const LoaderOverlay: React.FC<{ show: boolean; text?: string }> = ({ show, text }) => {
+  if (!show) return null;
+  return (
+    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/30 backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-3 rounded-xl bg-white dark:bg-slate-800 px-6 py-5 shadow-xl">
+        <Loader type="ball-spin-fade-loader" active />
+        {text ? (
+          <p className="text-sm text-slate-700 dark:text-slate-200">{text}</p>
+        ) : null}
+      </div>
+    </div>
+  );
+};
+
+/* ---------- Tela de Login ---------- */
+const LoginScreen: React.FC<{ onLogin: () => void; setGlobalLoading: (v: boolean) => void }> = ({ onLogin, setGlobalLoading }) => {
   const { theme, toggleTheme } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +46,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     if (submitting) return;
     setError('');
     setSubmitting(true);
+    setGlobalLoading(true);
 
     try {
       const resp = await api('/api/login', {
@@ -51,6 +64,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       setError('Erro de rede. Tente novamente.');
     } finally {
       setSubmitting(false);
+      setGlobalLoading(false);
     }
   };
 
@@ -68,9 +82,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       <Card className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-extrabold text-primary-600 dark:text-primary-400">
-            Simulador de Margem
-          </h1>
+          <h1 className="text-3xl font-extrabold text-primary-600 dark:text-primary-400">Simulador de Margem</h1>
           <p className="text-slate-600 dark:text-slate-300 mt-2">Faça login para continuar</p>
         </div>
 
@@ -109,18 +121,22 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   );
 };
 
-/* ===================== App ===================== */
+/* ---------- App ---------- */
 const AppContent: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = checando
+  const [globalLoading, setGlobalLoading] = useState<boolean>(false);
 
-  // Checa sessão no carregamento. 401 aqui é normal antes do login.
+  // Checa sessão ao carregar – mostra loader enquanto verifica
   useEffect(() => {
     (async () => {
+      setGlobalLoading(true);
       try {
         const r = await api('/api/me');
         setIsLoggedIn(r.ok);
       } catch {
         setIsLoggedIn(false);
+      } finally {
+        setGlobalLoading(false);
       }
     })();
   }, []);
@@ -128,17 +144,28 @@ const AppContent: React.FC = () => {
   const handleLogin = useCallback(() => setIsLoggedIn(true), []);
 
   const handleLogout = useCallback(async () => {
+    setGlobalLoading(true);
     try {
       await api('/api/logout', { method: 'POST' });
     } catch {}
     setIsLoggedIn(false);
+    setGlobalLoading(false);
   }, []);
 
-  if (isLoggedIn === null) return null; // pode renderizar um spinner se quiser
-
-  if (!isLoggedIn) return <LoginScreen onLogin={handleLogin} />;
-
-  return <MarginSimulator onLogout={handleLogout} />;
+  // Render
+  return (
+    <>
+      <LoaderOverlay show={globalLoading} text="Carregando..." />
+      {isLoggedIn ? (
+        <MarginSimulator onLogout={handleLogout} />
+      ) : isLoggedIn === false ? (
+        <LoginScreen onLogin={handleLogin} setGlobalLoading={setGlobalLoading} />
+      ) : (
+        // estado inicial (null): mostra página vazia enquanto overlay aparece
+        <div className="min-h-screen bg-slate-50 dark:bg-slate-900" />
+      )}
+    </>
+  );
 };
 
 const App: React.FC = () => {
