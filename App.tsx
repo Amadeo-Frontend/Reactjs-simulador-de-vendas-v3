@@ -6,13 +6,21 @@ import Card from './components/ui/Card';
 import SunIcon from './components/icons/SunIcon';
 import MoonIcon from './components/icons/MoonIcon';
 
+/**
+ * API helper
+ * - Em produção usa a URL do backend na Vercel (VITE_API_BASE)
+ * - Em dev local (sem VITE_API_BASE), usa caminho relativo e o proxy do Vite (se configurado)
+ */
 const API_BASE = import.meta.env.VITE_API_BASE || '';
 
 async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
   const r = await fetch(url, {
-    credentials: 'include',
-    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
+    credentials: 'include', // necessário para enviar/receber cookie httpOnly
+    headers: {
+      'Content-Type': 'application/json',
+      ...(init?.headers || {})
+    },
     ...init
   });
   return r;
@@ -29,16 +37,17 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
     setError('');
 
     try {
-      const r = await api('/api/login', {
+      const resp = await api('/api/login', {
         method: 'POST',
-        body: JSON.stringify({ username, password }),
+        body: JSON.stringify({ username, password })
       });
 
-      if (!r.ok) {
-        const data = await r.json().catch(() => ({}));
+      if (!resp.ok) {
+        const data = await resp.json().catch(() => ({}));
         setError(data?.message || 'Credenciais inválidas. Tente novamente.');
         return;
       }
+
       onLogin();
     } catch {
       setError('Erro de rede. Tente novamente.');
@@ -59,15 +68,31 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       <Card className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">Simulador de Margem</h1>
+          <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+            Simulador de Margem
+          </h1>
           <p className="text-slate-600 dark:text-slate-300 mt-2">Faça login para continuar</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
-          <Input label="Usuário" id="username" type="text" value={username}
-                 onChange={(e) => setUsername(e.target.value)} required autoComplete="username" />
-          <Input label="Senha" id="password" type="password" value={password}
-                 onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+          <Input
+            label="Usuário"
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+            autoComplete="username"
+          />
+          <Input
+            label="Senha"
+            id="password"
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+          />
 
           {error && <p className="text-sm text-red-500 text-center">{error}</p>}
 
@@ -86,6 +111,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 const AppContent: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
 
+  // verifica sessão ao carregar (cookie httpOnly)
   useEffect(() => {
     (async () => {
       try {
@@ -98,20 +124,32 @@ const AppContent: React.FC = () => {
   }, []);
 
   const handleLogin = useCallback(() => setIsLoggedIn(true), []);
+
   const handleLogout = useCallback(async () => {
-    try { await api('/api/logout', { method: 'POST' }); } catch {}
+    try {
+      await api('/api/logout', { method: 'POST' });
+    } catch {}
     setIsLoggedIn(false);
   }, []);
 
-  if (isLoggedIn === null) return null;
-  if (!isLoggedIn) return <LoginScreen onLogin={handleLogin} />;
+  if (isLoggedIn === null) {
+    // pode colocar um spinner aqui se preferir
+    return null;
+  }
+
+  if (!isLoggedIn) {
+    return <LoginScreen onLogin={handleLogin} />;
+  }
+
   return <MarginSimulator onLogout={handleLogout} />;
 };
 
-const App: React.FC = () => (
-  <ThemeProvider>
-    <AppContent />
-  </ThemeProvider>
-);
+const App: React.FC = () => {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
+  );
+};
 
 export default App;
