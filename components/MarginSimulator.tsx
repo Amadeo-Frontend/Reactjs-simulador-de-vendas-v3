@@ -55,7 +55,7 @@ const ProductSearch: React.FC<ProductSearchProps> = ({ onProductSelect, addedPro
                                     disabled={isDisabled}
                                     className={`w-full text-left px-4 py-2 ${isDisabled
                                             ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed'
-                                            : 'hover:bg-primary-100 dark:hover:bg-primary-900'
+                                            : 'hover:bg-green-300 dark:hover:bg-green-900'
                                         } text-slate-800 dark:text-slate-200`}
                                 >
                                     <p className="font-semibold">{product.nome}</p>
@@ -356,7 +356,7 @@ const MarginSimulator: React.FC<MarginSimulatorProps> = ({ onLogout }) => {
                         })}
                         <button
                             onClick={addSale}
-                            className="w-full px-6 py-3 border-2 border-dashed border-primary-400 text-primary-600 dark:text-primary-300 font-semibold rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-all"
+                            className="w-full px-6 py-3 border-2 border-dashed border-blue-400 text-white-600 dark:text-blue-300 font-semibold rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all"
                         >
                             + Adicionar Outra Venda
                         </button>
@@ -370,7 +370,7 @@ const MarginSimulator: React.FC<MarginSimulatorProps> = ({ onLogout }) => {
                              <button
                                 onClick={exportToPdf}
                                 disabled={!hasResults}
-                                className="w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 disabled:bg-slate-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-all"
+                                className="w-full px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 disabled:bg-slate-400 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-all"
                             >
                                 Exportar para PDF
                             </button>

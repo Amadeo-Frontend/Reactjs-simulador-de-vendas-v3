@@ -111,7 +111,7 @@ const LoginScreen: React.FC<{ onLogin: () => void; setGlobalLoading: (v: boolean
           <button
             type="submit"
             disabled={submitting}
-            className="w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-transform transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-6 py-3 bg-green-400 text-white font-semibold rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 transition-transform transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {submitting ? 'Entrando…' : 'Entrar'}
           </button>
