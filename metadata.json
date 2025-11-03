@@ -1,0 +1,4 @@
+{
+  "name": "Simulador de Margem de Venda",
+  "description": "Uma aplicação para simular a margem de lucro em vendas de produtos, permitindo adicionar bonificações em produtos ou dinheiro e exportar os resultados em PDF."
+}
