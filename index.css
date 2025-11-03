@@ -7,4 +7,5 @@
   color-scheme: light dark;
 }
 html { transition: background-color .3s, color .3s; }
-
+/* melhora contraste do placeholder no dark */
+::placeholder { opacity: .9; }
