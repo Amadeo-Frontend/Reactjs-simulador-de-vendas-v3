@@ -6,35 +6,34 @@ import Card from './components/ui/Card';
 import SunIcon from './components/icons/SunIcon';
 import MoonIcon from './components/icons/MoonIcon';
 
-/**
- * API helper
- * - Em produção usa a URL do backend na Vercel (VITE_API_BASE)
- * - Em dev local (sem VITE_API_BASE), usa caminho relativo e o proxy do Vite (se configurado)
+/** Base da API:
+ *  - Produção (Vercel): defina VITE_API_BASE = https://server-simulador-de-vendas-v3.onrender.com
+ *  - Dev local: deixe vazio e use proxy do Vite se quiser
  */
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://server-simulador-de-vendas-v3.onrender.com';
 
 async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
-  const r = await fetch(url, {
-    credentials: 'include', // necessário para enviar/receber cookie httpOnly
-    headers: {
-      'Content-Type': 'application/json',
-      ...(init?.headers || {})
-    },
+  return fetch(url, {
+    credentials: 'include', // envia/recebe cookie httpOnly
+    headers: { 'Content-Type': 'application/json', ...(init?.headers || {}) },
     ...init
   });
-  return r;
 }
 
+/* ===================== Login ===================== */
 const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { theme, toggleTheme } = useTheme();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submitting) return;
     setError('');
+    setSubmitting(true);
 
     try {
       const resp = await api('/api/login', {
@@ -43,14 +42,15 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       });
 
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({}));
+        const data = await resp.json().catch(() => ({} as any));
         setError(data?.message || 'Credenciais inválidas. Tente novamente.');
         return;
       }
-
       onLogin();
     } catch {
       setError('Erro de rede. Tente novamente.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -60,7 +60,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         <button
           onClick={toggleTheme}
           className="p-2 rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-          aria-label="Toggle theme"
+          aria-label="Alternar tema"
         >
           {theme === 'light' ? <MoonIcon className="w-6 h-6" /> : <SunIcon className="w-6 h-6" />}
         </button>
@@ -68,7 +68,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       <Card className="w-full max-w-sm">
         <div className="text-center mb-6">
-          <h1 className="text-3xl font-bold text-primary-600 dark:text-primary-400">
+          <h1 className="text-3xl font-extrabold text-primary-600 dark:text-primary-400">
             Simulador de Margem
           </h1>
           <p className="text-slate-600 dark:text-slate-300 mt-2">Faça login para continuar</p>
@@ -98,9 +98,10 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
           <button
             type="submit"
-            className="w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-transform transform hover:scale-105"
+            disabled={submitting}
+            className="w-full px-6 py-3 bg-primary-600 text-white font-semibold rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-opacity-50 transition-transform transform hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            Entrar
+            {submitting ? 'Entrando…' : 'Entrar'}
           </button>
         </form>
       </Card>
@@ -108,10 +109,11 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   );
 };
 
+/* ===================== App ===================== */
 const AppContent: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = checando
 
-  // verifica sessão ao carregar (cookie httpOnly)
+  // Checa sessão no carregamento. 401 aqui é normal antes do login.
   useEffect(() => {
     (async () => {
       try {
@@ -132,14 +134,9 @@ const AppContent: React.FC = () => {
     setIsLoggedIn(false);
   }, []);
 
-  if (isLoggedIn === null) {
-    // pode colocar um spinner aqui se preferir
-    return null;
-  }
+  if (isLoggedIn === null) return null; // pode renderizar um spinner se quiser
 
-  if (!isLoggedIn) {
-    return <LoginScreen onLogin={handleLogin} />;
-  }
+  if (!isLoggedIn) return <LoginScreen onLogin={handleLogin} />;
 
   return <MarginSimulator onLogout={handleLogout} />;
 };
