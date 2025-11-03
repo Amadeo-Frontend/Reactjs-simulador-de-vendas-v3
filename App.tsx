@@ -7,7 +7,7 @@ import SunIcon from './components/icons/SunIcon';
 import MoonIcon from './components/icons/MoonIcon';
 import Loader from 'react-loaders';
 
-const API_BASE = import.meta.env.VITE_API_BASE || '';
+const API_BASE = import.meta.env.VITE_API_BASE || 'https://reactjs-simulador-de-vendas-v3-jwu4e7v84.vercel.app/';
 
 async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
