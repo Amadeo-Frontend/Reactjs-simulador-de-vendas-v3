@@ -9,16 +9,14 @@ import Loader from "react-loaders";
 
 /* ==================== API helper (com Bearer) ==================== */
 
+// substitua seu helper API por este
+
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   "https://reactjs-simulador-de-vendas-v3.vercel.app";
 
 function getToken() {
-  try {
-    return localStorage.getItem("auth_token") || "";
-  } catch {
-    return "";
-  }
+  try { return localStorage.getItem("auth_token") || ""; } catch { return ""; }
 }
 
 async function api(path: string, init: RequestInit = {}) {
@@ -26,12 +24,11 @@ async function api(path: string, init: RequestInit = {}) {
   const method = (init.method || "GET").toString().toUpperCase();
   const headers = new Headers(init.headers || {});
 
-  // Só define Content-Type quando NÃO for GET
+  // GET continua "simples": não setar Content-Type
   if (method !== "GET" && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
-  // Anexa Bearer se existir
   const t = getToken();
   if (t && !headers.has("Authorization")) {
     headers.set("Authorization", `Bearer ${t}`);
@@ -41,10 +38,10 @@ async function api(path: string, init: RequestInit = {}) {
     ...init,
     method,
     headers,
-    // Mantemos include: se o navegador permitir cookie, beleza; senão, o Bearer resolve
-    credentials: "include",
+    // REMOVIDO: credentials: "include" (não precisamos mais de cookie)
   });
 }
+
 
 /* ==================== UI: Overlay de carregamento ==================== */
 
