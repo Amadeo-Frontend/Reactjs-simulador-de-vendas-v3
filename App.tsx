@@ -7,32 +7,49 @@ import SunIcon from "./components/icons/SunIcon";
 import MoonIcon from "./components/icons/MoonIcon";
 import Loader from "react-loaders";
 
+/* ==================== API helper (com Bearer) ==================== */
+
 const API_BASE =
   import.meta.env.VITE_API_BASE ||
   "https://reactjs-simulador-de-vendas-v3.vercel.app";
 
+function getToken() {
+  try {
+    return localStorage.getItem("auth_token") || "";
+  } catch {
+    return "";
+  }
+}
+
 async function api(path: string, init: RequestInit = {}) {
   const url = `${API_BASE}${path}`;
-
-  // monta headers sem forçar Content-Type no GET
-  const method = (init.method || "GET").toUpperCase();
+  const method = (init.method || "GET").toString().toUpperCase();
   const headers = new Headers(init.headers || {});
+
+  // Só define Content-Type quando NÃO for GET
   if (method !== "GET" && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }
 
+  // Anexa Bearer se existir
+  const t = getToken();
+  if (t && !headers.has("Authorization")) {
+    headers.set("Authorization", `Bearer ${t}`);
+  }
+
   return fetch(url, {
-    credentials: "include",
     ...init,
     method,
     headers,
+    // Mantemos include: se o navegador permitir cookie, beleza; senão, o Bearer resolve
+    credentials: "include",
   });
 }
 
-/* ---------- UI: Overlay de carregamento ---------- */
+/* ==================== UI: Overlay de carregamento ==================== */
+
 const LoaderOverlay: React.FC<{ show: boolean; text?: string }> = ({
   show,
-  text,
 }) => {
   if (!show) return null;
   return (
@@ -42,7 +59,8 @@ const LoaderOverlay: React.FC<{ show: boolean; text?: string }> = ({
   );
 };
 
-/* ---------- Tela de Login ---------- */
+/* ==================== Tela de Login ==================== */
+
 const LoginScreen: React.FC<{
   onLogin: () => void;
   setGlobalLoading: (v: boolean) => void;
@@ -66,11 +84,20 @@ const LoginScreen: React.FC<{
         body: JSON.stringify({ username, password }),
       });
 
-      if (!resp.ok) {
-        const data = await resp.json().catch(() => ({} as any));
+      const data = await resp.json().catch(() => ({} as any));
+
+      if (!resp.ok || !data?.ok) {
         setError(data?.message || "Credenciais inválidas. Tente novamente.");
         return;
       }
+
+      // Salva token Bearer (evita bloqueio de cookie de terceiros)
+      if (data.token) {
+        try {
+          localStorage.setItem("auth_token", data.token);
+        } catch {}
+      }
+
       onLogin();
     } catch {
       setError("Erro de rede. Tente novamente.");
@@ -141,17 +168,18 @@ const LoginScreen: React.FC<{
   );
 };
 
-/* ---------- App ---------- */
+/* ==================== App ==================== */
+
 const AppContent: React.FC = () => {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = checando
   const [globalLoading, setGlobalLoading] = useState<boolean>(false);
 
-  // Checa sessão ao carregar – mostra loader enquanto verifica
+  // Checa sessão ao carregar (com Bearer se existir)
   useEffect(() => {
     (async () => {
       setGlobalLoading(true);
       try {
-        const r = await api("/api/me");
+        const r = await api("/api/me"); // GET sem Content-Type -> sem preflight
         setIsLoggedIn(r.ok);
       } catch {
         setIsLoggedIn(false);
@@ -166,6 +194,10 @@ const AppContent: React.FC = () => {
   const handleLogout = useCallback(async () => {
     setGlobalLoading(true);
     try {
+      // Remove token Bearer e tenta encerrar cookie (se houver)
+      try {
+        localStorage.removeItem("auth_token");
+      } catch {}
       await api("/api/logout", { method: "POST" });
     } catch {}
     setIsLoggedIn(false);
