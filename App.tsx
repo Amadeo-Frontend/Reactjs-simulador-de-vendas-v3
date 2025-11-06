@@ -11,12 +11,21 @@ const API_BASE =
   import.meta.env.VITE_API_BASE ||
   "https://reactjs-simulador-de-vendas-v3.vercel.app";
 
-async function api(path: string, init?: RequestInit) {
+async function api(path: string, init: RequestInit = {}) {
   const url = `${API_BASE}${path}`;
+
+  // monta headers sem forçar Content-Type no GET
+  const method = (init.method || "GET").toUpperCase();
+  const headers = new Headers(init.headers || {});
+  if (method !== "GET" && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
+
   return fetch(url, {
     credentials: "include",
-    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     ...init,
+    method,
+    headers,
   });
 }
 
