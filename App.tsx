@@ -2,12 +2,17 @@ import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
 
 import { ThemeProvider, useTheme } from "./hooks/useTheme";
+import { LoadingProvider, useLoading } from "./hooks/useLoading";
+import LoadingOverlay from "./components/LoadingOverlay";
+import RouteChangeLoader from "./components/RouteChangeLoader";
+
 import SunIcon from "./components/icons/SunIcon";
 import MoonIcon from "./components/icons/MoonIcon";
 
 import Home from "./pages/Home";
 import MarginSimulator from "./components/MarginSimulator";
 
+/* ============== API helper (sem loader automático) ============== */
 const API_BASE =
   import.meta.env.VITE_API_BASE || "https://server-simulador-de-vendas-v3.onrender.com";
 
@@ -20,7 +25,7 @@ async function api(path: string, init?: RequestInit) {
   });
 }
 
-/** Botão de tema usando seu hook atual */
+/* ============== UI: Botão de Tema ============== */
 const ThemeButton: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
   return (
@@ -35,8 +40,9 @@ const ThemeButton: React.FC = () => {
   );
 };
 
-/* ---------- Login ---------- */
+/* ============== Tela de Login (usa o loader) ============== */
 const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const { show, hide } = useLoading();
   const [username, setU] = useState("");
   const [password, setP] = useState("");
   const [err, setErr] = useState("");
@@ -44,16 +50,21 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErr("");
-    const r = await api("/api/login", {
-      method: "POST",
-      body: JSON.stringify({ username, password }),
-    });
-    if (!r.ok) {
-      const j = await r.json().catch(() => ({}));
-      setErr(j?.message || "Credenciais inválidas.");
-      return;
+    try {
+      show("Validando credenciais...");
+      const r = await api("/api/login", {
+        method: "POST",
+        body: JSON.stringify({ username, password }),
+      });
+      if (!r.ok) {
+        const j = await r.json().catch(() => ({} as any));
+        setErr(j?.message || "Credenciais inválidas.");
+        return;
+      }
+      onLogin();
+    } finally {
+      hide();
     }
-    onLogin();
   };
 
   return (
@@ -88,7 +99,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
             />
           </div>
 
-          {err && <p className="text-sm text-red-500">{err}</p>}
+        {err && <p className="text-sm text-red-500">{err}</p>}
 
           <button
             type="submit"
@@ -102,20 +113,24 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   );
 };
 
-/* ---------- App Shell ---------- */
+/* ============== App Shell (usa o loader) ============== */
 const AppContent: React.FC = () => {
+  const { show, hide } = useLoading();
   const [isLogged, setIsLogged] = useState<boolean | null>(null);
 
   useEffect(() => {
     (async () => {
       try {
+        show("Checando sessão...");
         const r = await api("/api/me");
         setIsLogged(r.ok);
       } catch {
         setIsLogged(false);
+      } finally {
+        hide();
       }
     })();
-  }, []);
+  }, [show, hide]);
 
   if (isLogged === null) return <div className="min-h-screen bg-background" />;
 
@@ -123,6 +138,9 @@ const AppContent: React.FC = () => {
 
   return (
     <BrowserRouter>
+      {/* Loader curto em toda troca de rota */}
+      <RouteChangeLoader />
+
       {/* Topbar global */}
       <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
         <div className="container flex items-center justify-between mx-auto h-14">
@@ -135,9 +153,12 @@ const AppContent: React.FC = () => {
               onSubmit={async (e) => {
                 e.preventDefault();
                 try {
+                  show("Saindo...");
                   await api("/api/logout", { method: "POST" });
-                } catch {}
-                location.reload();
+                } finally {
+                  hide();
+                  location.reload();
+                }
               }}
             >
               <button
@@ -159,9 +180,14 @@ const AppContent: React.FC = () => {
   );
 };
 
+/* ============== App Root (Theme + Loading Providers) ============== */
 const App: React.FC = () => (
   <ThemeProvider>
-    <AppContent />
+    <LoadingProvider>
+      {/* Overlay global do loader (sempre montado) */}
+      <LoadingOverlay />
+      <AppContent />
+    </LoadingProvider>
   </ThemeProvider>
 );
 

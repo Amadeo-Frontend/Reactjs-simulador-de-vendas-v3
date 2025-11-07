@@ -13,7 +13,7 @@ const Home: React.FC = () => {
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         <Link
           to="/simulador"
-          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md"
+          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
         >
           <div className="mb-2 text-sm text-muted-foreground">Vendas</div>
           <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">

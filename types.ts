@@ -1,9 +1,7 @@
 export type PriceKey =
-  | 'preco_venda'
   | 'preco_venda_A'
   | 'preco_venda_B'
-  | 'preco_venda_C'
-  | 'preco_venda_D';
+  | 'preco_venda_C';
 
 export interface Product {
   id: number;
@@ -11,14 +9,11 @@ export interface Product {
   nome: string;
   peso: number;
 
-  // legado (opcional)
-  preco_venda?: number | null;
 
   // novos (opcionais)
   preco_venda_A?: number | null;
   preco_venda_B?: number | null;
   preco_venda_C?: number | null;
-  preco_venda_D?: number | null;
 
   // custo e bonificação
   custo: number | null;                 // custo unitário

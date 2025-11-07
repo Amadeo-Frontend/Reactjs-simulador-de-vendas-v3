@@ -2,17 +2,34 @@
 <html lang="pt-BR">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/images/chart-user-square-svgrepo-com.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Simulador de Margem</title>
+    <link rel="icon" type="image/svg+xml" href="/images/chart-user-square-svgrepo-com.svg" />
+    <meta name="color-scheme" content="dark light" />
 
-    <!-- sem Tailwind CDN; Tailwind via build -->
+    <!-- Aplica o tema ANTES do primeiro paint (evita flash ao navegar) -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('theme');
+          if (t !== 'light' && t !== 'dark') {
+            t = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          var root = document.documentElement;
+          root.classList.toggle('dark', t === 'dark');
+          root.style.colorScheme = t === 'dark' ? 'dark' : 'light';
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- libs usadas pelo exportar PDF (carregam após o paint) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer></script>
   </head>
+
   <body class="transition-colors duration-300 bg-slate-50 dark:bg-slate-900">
+    <noscript>Habilite o JavaScript para usar este aplicativo.</noscript>
     <div id="root"></div>
-    <!-- ENTRY CORRETO PARA O SEU PROJETO -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
