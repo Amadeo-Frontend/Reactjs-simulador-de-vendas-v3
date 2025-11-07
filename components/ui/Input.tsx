@@ -1,50 +1,22 @@
-import React, { forwardRef, InputHTMLAttributes } from 'react';
-import clsx from 'clsx';
+import * as React from "react"
 
-type Props = {
-  label?: string;
-  id?: string;
-  className?: string;
-} & InputHTMLAttributes<HTMLInputElement>;
+import { cn } from "@/lib/utils"
 
-const Input = forwardRef<HTMLInputElement, Props>(
-  ({ label, id, className, type = 'text', onWheel, ...rest }, ref) => {
+const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<"input">>(
+  ({ className, type, ...props }, ref) => {
     return (
-      <div className="flex flex-col gap-1">
-        {label ? (
-          <label
-            htmlFor={id}
-            className="text-sm font-medium text-slate-700 dark:text-slate-300"
-          >
-            {label}
-          </label>
-        ) : null}
-
-        <input
-          ref={ref}
-          id={id}
-          type={type}
-          // evita que o scroll do mouse altere o número sem querer
-          onWheel={(e) => {
-            if (type === 'number') (e.target as HTMLInputElement).blur();
-            onWheel?.(e);
-          }}
-          className={clsx(
-            'block w-full rounded-md border shadow-sm px-3 py-2 text-sm',
-            // light
-            'bg-white text-slate-900 placeholder-slate-400 border-slate-300',
-            'focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-            // dark
-            'dark:bg-slate-800 dark:text-slate-100 dark:placeholder-slate-400 dark:border-slate-600',
-            'dark:focus:ring-blue-400 dark:focus:border-blue-400',
-            className
-          )}
-          {...rest}
-        />
-      </div>
-    );
+      <input
+        type={type}
+        className={cn(
+          "flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+          className
+        )}
+        ref={ref}
+        {...props}
+      />
+    )
   }
-);
+)
+Input.displayName = "Input"
 
-Input.displayName = 'Input';
-export default Input;
+export { Input }

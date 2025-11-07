@@ -1,231 +1,168 @@
-import React, { useState, useCallback, useEffect } from "react";
-import MarginSimulator from "./components/MarginSimulator";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, Link } from "react-router-dom";
+
 import { ThemeProvider, useTheme } from "./hooks/useTheme";
-import Input from "./components/ui/Input";
-import Card from "./components/ui/Card";
 import SunIcon from "./components/icons/SunIcon";
 import MoonIcon from "./components/icons/MoonIcon";
-import Loader from "react-loaders";
 
-/* ==================== API helper (com Bearer) ==================== */
-
-// substitua seu helper API por este
+import Home from "./pages/Home";
+import MarginSimulator from "./components/MarginSimulator";
 
 const API_BASE =
-  import.meta.env.VITE_API_BASE ||
-  "https://reactjs-simulador-de-vendas-v3.vercel.app";
+  import.meta.env.VITE_API_BASE || "https://server-simulador-de-vendas-v3.onrender.com";
 
-function getToken() {
-  try { return localStorage.getItem("auth_token") || ""; } catch { return ""; }
-}
-
-async function api(path: string, init: RequestInit = {}) {
+async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
-  const method = (init.method || "GET").toString().toUpperCase();
-  const headers = new Headers(init.headers || {});
-
-  // GET continua "simples": não setar Content-Type
-  if (method !== "GET" && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/json");
-  }
-
-  const t = getToken();
-  if (t && !headers.has("Authorization")) {
-    headers.set("Authorization", `Bearer ${t}`);
-  }
-
   return fetch(url, {
+    credentials: "include",
+    headers: { "Content-Type": "application/json", ...(init?.headers || {}) },
     ...init,
-    method,
-    headers,
-    // REMOVIDO: credentials: "include" (não precisamos mais de cookie)
   });
 }
 
-
-/* ==================== UI: Overlay de carregamento ==================== */
-
-const LoaderOverlay: React.FC<{ show: boolean; text?: string }> = ({
-  show,
-}) => {
-  if (!show) return null;
+/** Botão de tema usando seu hook atual */
+const ThemeButton: React.FC = () => {
+  const { theme, toggleTheme } = useTheme();
   return (
-    <div className="fixed inset-0 z-[1000] grid place-items-center bg-black/30 backdrop-blur-sm">
-      <Loader type="ball-spin-fade-loader" active />
-    </div>
+    <button
+      onClick={toggleTheme}
+      className="inline-flex items-center gap-2 px-3 text-sm border rounded-md h-9 border-border bg-background hover:bg-secondary"
+      aria-label="Alternar tema"
+    >
+      {theme === "light" ? <MoonIcon className="w-4 h-4" /> : <SunIcon className="w-4 h-4" />}
+      <span className="hidden sm:inline">{theme === "light" ? "Escuro" : "Claro"}</span>
+    </button>
   );
 };
 
-/* ==================== Tela de Login ==================== */
+/* ---------- Login ---------- */
+const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const [username, setU] = useState("");
+  const [password, setP] = useState("");
+  const [err, setErr] = useState("");
 
-const LoginScreen: React.FC<{
-  onLogin: () => void;
-  setGlobalLoading: (v: boolean) => void;
-}> = ({ onLogin, setGlobalLoading }) => {
-  const { theme, toggleTheme } = useTheme();
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState("");
-
-  const handleSubmit = async (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (submitting) return;
-    setError("");
-    setSubmitting(true);
-    setGlobalLoading(true);
-
-    try {
-      const resp = await api("/api/login", {
-        method: "POST",
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await resp.json().catch(() => ({} as any));
-
-      if (!resp.ok || !data?.ok) {
-        setError(data?.message || "Credenciais inválidas. Tente novamente.");
-        return;
-      }
-
-      // Salva token Bearer (evita bloqueio de cookie de terceiros)
-      if (data.token) {
-        try {
-          localStorage.setItem("auth_token", data.token);
-        } catch {}
-      }
-
-      onLogin();
-    } catch {
-      setError("Erro de rede. Tente novamente.");
-    } finally {
-      setSubmitting(false);
-      setGlobalLoading(false);
+    setErr("");
+    const r = await api("/api/login", {
+      method: "POST",
+      body: JSON.stringify({ username, password }),
+    });
+    if (!r.ok) {
+      const j = await r.json().catch(() => ({}));
+      setErr(j?.message || "Credenciais inválidas.");
+      return;
     }
+    onLogin();
   };
 
   return (
-    <div className="relative flex items-center justify-center min-h-screen p-4 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-50">
-      <div className="absolute top-4 right-4">
-        <button
-          onClick={toggleTheme}
-          className="p-2 transition-colors rounded-full text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700"
-          aria-label="Alternar tema"
-        >
-          {theme === "light" ? (
-            <MoonIcon className="w-6 h-6" />
-          ) : (
-            <SunIcon className="w-6 h-6" />
-          )}
-        </button>
+    <div className="grid min-h-screen place-items-center bg-slate-50 dark:bg-slate-900">
+      <div className="absolute right-4 top-4">
+        <ThemeButton />
       </div>
 
-      <Card className="w-full max-w-sm">
-        <div className="mb-6 text-center">
-          <h1 className="text-3xl font-extrabold text-primary-600 dark:text-primary-400">
-            Simulador de Margem
-          </h1>
-          <p className="mt-2 text-slate-600 dark:text-slate-300">
-            Faça login para continuar
-          </p>
-        </div>
+      <div className="w-full max-w-md p-6 border shadow rounded-xl border-border bg-card">
+        <h1 className="mb-1 text-2xl font-bold text-primary">Simulador de Margem</h1>
+        <p className="mb-6 text-sm text-muted-foreground">Faça login para continuar</p>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="Usuário"
-            id="username"
-            type="text"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            required
-            autoComplete="username"
-          />
-          <Input
-            label="Senha"
-            id="password"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            autoComplete="current-password"
-          />
+        <form onSubmit={submit} className="space-y-4">
+          <div>
+            <label className="block mb-1 text-sm">Usuário</label>
+            <input
+              className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background"
+              value={username}
+              onChange={(e) => setU(e.target.value)}
+              autoComplete="username"
+            />
+          </div>
 
-          {error && <p className="text-sm text-center text-red-500">{error}</p>}
+          <div>
+            <label className="block mb-1 text-sm">Senha</label>
+            <input
+              className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background"
+              type="password"
+              value={password}
+              onChange={(e) => setP(e.target.value)}
+              autoComplete="current-password"
+            />
+          </div>
+
+          {err && <p className="text-sm text-red-500">{err}</p>}
 
           <button
             type="submit"
-            disabled={submitting}
-            className="w-full px-6 py-3 font-semibold text-white transition-transform transform bg-green-400 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50 hover:scale-105 disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full px-4 py-2 font-semibold text-white rounded-md bg-emerald-600 hover:bg-emerald-700"
           >
-            {submitting ? "Entrando…" : "Entrar"}
+            Entrar
           </button>
         </form>
-      </Card>
+      </div>
     </div>
   );
 };
 
-/* ==================== App ==================== */
-
+/* ---------- App Shell ---------- */
 const AppContent: React.FC = () => {
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // null = checando
-  const [globalLoading, setGlobalLoading] = useState<boolean>(false);
+  const [isLogged, setIsLogged] = useState<boolean | null>(null);
 
-  // Checa sessão ao carregar (com Bearer se existir)
   useEffect(() => {
     (async () => {
-      setGlobalLoading(true);
       try {
-        const r = await api("/api/me"); // GET sem Content-Type -> sem preflight
-        setIsLoggedIn(r.ok);
+        const r = await api("/api/me");
+        setIsLogged(r.ok);
       } catch {
-        setIsLoggedIn(false);
-      } finally {
-        setGlobalLoading(false);
+        setIsLogged(false);
       }
     })();
   }, []);
 
-  const handleLogin = useCallback(() => setIsLoggedIn(true), []);
+  if (isLogged === null) return <div className="min-h-screen bg-background" />;
 
-  const handleLogout = useCallback(async () => {
-    setGlobalLoading(true);
-    try {
-      // Remove token Bearer e tenta encerrar cookie (se houver)
-      try {
-        localStorage.removeItem("auth_token");
-      } catch {}
-      await api("/api/logout", { method: "POST" });
-    } catch {}
-    setIsLoggedIn(false);
-    setGlobalLoading(false);
-  }, []);
+  if (!isLogged) return <LoginScreen onLogin={() => setIsLogged(true)} />;
 
-  // Render
   return (
-    <>
-      <LoaderOverlay show={globalLoading} text="Carregando..." />
-      {isLoggedIn ? (
-        <MarginSimulator onLogout={handleLogout} />
-      ) : isLoggedIn === false ? (
-        <LoginScreen
-          onLogin={handleLogin}
-          setGlobalLoading={setGlobalLoading}
-        />
-      ) : (
-        // estado inicial (null): mostra página vazia enquanto overlay aparece
-        <div className="min-h-screen bg-slate-50 dark:bg-slate-900" />
-      )}
-    </>
+    <BrowserRouter>
+      {/* Topbar global */}
+      <div className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur">
+        <div className="container flex items-center justify-between mx-auto h-14">
+          <Link to="/" className="font-semibold">
+            Sulpet • Painel
+          </Link>
+          <div className="flex items-center gap-2">
+            <ThemeButton />
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                try {
+                  await api("/api/logout", { method: "POST" });
+                } catch {}
+                location.reload();
+              }}
+            >
+              <button
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-secondary"
+                type="submit"
+              >
+                Sair
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/simulador" element={<MarginSimulator />} />
+      </Routes>
+    </BrowserRouter>
   );
 };
 
-const App: React.FC = () => {
-  return (
-    <ThemeProvider>
-      <AppContent />
-    </ThemeProvider>
-  );
-};
+const App: React.FC = () => (
+  <ThemeProvider>
+    <AppContent />
+  </ThemeProvider>
+);
 
 export default App;
