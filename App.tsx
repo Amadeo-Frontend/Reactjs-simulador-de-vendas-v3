@@ -74,7 +74,7 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
       </div>
 
       <div className="w-full max-w-md p-6 border shadow rounded-xl border-border bg-card">
-        <h1 className="mb-1 text-2xl font-bold text-primary">Simulador de Margem</h1>
+        <h1 className="mb-1 text-2xl font-bold text-primary">Dashboard Sulpet</h1>
         <p className="mb-6 text-sm text-muted-foreground">Faça login para continuar</p>
 
         <form onSubmit={submit} className="space-y-4">
