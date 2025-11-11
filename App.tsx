@@ -10,7 +10,7 @@ import RouteChangeLoader from "./components/RouteChangeLoader";
 import Header from "./components/Header"; // <-- novo header fixo
 
 import Home from "./pages/Home";
-import MarginSimulator from "./components/MarginSimulator";
+import MarginSimulator from "./pages/MarginSimulator";
 import ProductsManagement from "./pages/ProductsManager";
 
 /* ============== API helper ============== */
