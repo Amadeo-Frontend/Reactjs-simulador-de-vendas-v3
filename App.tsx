@@ -2,16 +2,27 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import { ThemeProvider } from "./hooks/useTheme";
+import { ThemeProvider, useTheme } from "./hooks/useTheme";
 import { LoadingProvider, useLoading } from "./hooks/useLoading";
 import LoadingOverlay from "./components/LoadingOverlay";
 import RouteChangeLoader from "./components/RouteChangeLoader";
 
-import Header from "./components/Header"; // <-- novo header fixo
+import Header from "./components/Header";
 
 import Home from "./pages/Home";
 import MarginSimulator from "./pages/MarginSimulator";
 import ProductsManagement from "./pages/ProductsManager";
+
+import {
+  User,
+  Lock,
+  Eye,
+  EyeOff,
+  ArrowRight,
+  Moon,
+  Sun,
+  ShieldCheck,
+} from "lucide-react";
 
 /* ============== API helper ============== */
 const API_BASE =
@@ -26,11 +37,34 @@ async function api(path: string, init?: RequestInit) {
   });
 }
 
+/* ============== Toggle de Tema (para usar na tela de login) ============== */
+const ThemeToggleBtn: React.FC<{ className?: string }> = ({ className }) => {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      className={
+        "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm " +
+        "border-border hover:bg-secondary " +
+        (className || "")
+      }
+      aria-label="Alternar tema"
+      title="Alternar tema"
+    >
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {isDark ? "Claro" : "Escuro"}
+    </button>
+  );
+};
+
 /* ============== Tela de Login (com loader) ============== */
 const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   const { show, hide } = useLoading();
   const [username, setU] = useState("");
   const [password, setP] = useState("");
+  const [reveal, setReveal] = useState(false);
   const [err, setErr] = useState("");
 
   const submit = async (e: React.FormEvent) => {
@@ -54,42 +88,94 @@ const LoginScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="grid min-h-screen place-items-center bg-slate-50 dark:bg-slate-900">
-      <div className="w-full max-w-md p-6 border shadow rounded-xl border-border bg-card">
-        <h1 className="mb-1 text-2xl font-bold text-primary">Dashboard Sulpet</h1>
-        <p className="mb-6 text-sm text-muted-foreground">Faça login para continuar</p>
+    <div className="min-h-screen bg-[radial-gradient(1000px_600px_at_10%_-10%,rgba(99,102,241,.08),transparent),radial-gradient(800px_500px_at_110%_10%,rgba(16,185,129,.08),transparent)] dark:bg-[radial-gradient(1000px_600px_at_10%_-10%,rgba(99,102,241,.15),transparent),radial-gradient(800px_500px_at_110%_10%,rgba(16,185,129,.12),transparent)] grid place-items-center px-4">
+      <div className="w-full max-w-md">
+        {/* Logo + título */}
+        <div className="flex flex-col items-center gap-3 mb-4">
+          <img
+            src="/logo.svg"
+            alt="Logo"
+            className="object-contain w-16 h-16 border shadow-sm rounded-xl border-border"
+          />
+          <div className="text-center">
+            <h1 className="text-2xl font-bold">Dashboard Sulpet</h1>
+            <p className="text-sm text-muted-foreground">
+              Acesse para gerenciar preços e simulações
+            </p>
+          </div>
+        </div>
 
-        <form onSubmit={submit} className="space-y-4">
-          <div>
-            <label className="block mb-1 text-sm">Usuário</label>
-            <input
-              className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background"
-              value={username}
-              onChange={(e) => setU(e.target.value)}
-              autoComplete="username"
-            />
+        <div className="p-5 border shadow-md rounded-2xl border-border bg-card">
+          {/* topo do card: toggle de tema */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+              <ShieldCheck className="w-4 h-4" />
+              Acesso restrito
+            </div>
+            <ThemeToggleBtn />
           </div>
 
-          <div>
-            <label className="block mb-1 text-sm">Senha</label>
-            <input
-              className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background"
-              type="password"
-              value={password}
-              onChange={(e) => setP(e.target.value)}
-              autoComplete="current-password"
-            />
+          <form onSubmit={submit} className="space-y-4">
+            {/* Usuário */}
+            <div>
+              <label className="block mb-1 text-sm">Usuário</label>
+              <div className="relative">
+                <User className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
+                <input
+                  className="w-full py-2 pr-3 border rounded-md outline-none pl-9 border-input bg-background"
+                  value={username}
+                  onChange={(e) => setU(e.target.value)}
+                  autoComplete="username"
+                  placeholder="seu@email.com"
+                />
+              </div>
+            </div>
+
+            {/* Senha */}
+            <div>
+              <label className="block mb-1 text-sm">Senha</label>
+              <div className="relative">
+                <Lock className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
+                <input
+                  className="w-full py-2 pr-10 border rounded-md outline-none pl-9 border-input bg-background"
+                  type={reveal ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setP(e.target.value)}
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                />
+                <button
+                  type="button"
+                  onClick={() => setReveal((v) => !v)}
+                  className="absolute p-1 -translate-y-1/2 rounded right-2 top-1/2 hover:bg-secondary"
+                  aria-label={reveal ? "Ocultar senha" : "Mostrar senha"}
+                  title={reveal ? "Ocultar senha" : "Mostrar senha"}
+                >
+                  {reveal ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+
+            {err && (
+              <div className="p-2 text-sm text-red-500 border rounded-md border-red-500/30 bg-red-500/5">
+                {err}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="inline-flex items-center justify-center w-full gap-2 px-4 py-2 font-semibold text-white rounded-md bg-emerald-600 hover:bg-emerald-700"
+            >
+              Entrar
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+
+          {/* rodapé pequeno */}
+          <div className="mt-4 text-[11px] text-center text-muted-foreground">
+            Suporte: TI Sulpet — acesso permitido somente para usuários autorizados.
           </div>
-
-          {err && <p className="text-sm text-red-500">{err}</p>}
-
-          <button
-            type="submit"
-            className="w-full px-4 py-2 font-semibold text-white rounded-md bg-emerald-600 hover:bg-emerald-700"
-          >
-            Entrar
-          </button>
-        </form>
+        </div>
       </div>
     </div>
   );
@@ -129,13 +215,8 @@ const AppContent: React.FC = () => {
 
   return (
     <BrowserRouter>
-      {/* Loader curto a cada troca de rota */}
       <RouteChangeLoader />
-
-      {/* Header fixo com logo + Voltar ao menu + tema + sair */}
       <Header onLogout={doLogout} />
-
-      {/* Rotas */}
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/simulador" element={<MarginSimulator />} />
@@ -149,7 +230,7 @@ const AppContent: React.FC = () => {
 const App: React.FC = () => (
   <ThemeProvider>
     <LoadingProvider>
-      <LoadingOverlay /> {/* overlay global do loader */}
+      <LoadingOverlay />
       <AppContent />
     </LoadingProvider>
   </ThemeProvider>
