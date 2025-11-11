@@ -6,6 +6,7 @@ import SunIcon from './icons/SunIcon';
 import MoonIcon from './icons/MoonIcon';
 import LogoutIcon from './icons/LogoutIcon';
 import { ArrowLeft } from 'lucide-react';
+import logo from "../images/logo.png";
 
 interface HeaderProps {
   onLogout: () => void;
@@ -25,7 +26,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
           {/* Logo + Título */}
           <div className="flex items-center gap-3">
             <img
-              src="/images/logo.png"
+              src={logo}
               alt="Sulpet"
               className="w-8 h-8 rounded-full shadow-sm"
             />

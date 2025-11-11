@@ -1,33 +1,26 @@
-import { useEffect, useState } from "react";
-import { Switch } from "@/components/ui/switch";
+// components/ThemeToggle.tsx
+import React from "react";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "../hooks/useTheme";
 
-export function ThemeToggle() {
-  const [isDark, setIsDark] = useState<boolean>(() =>
-    typeof document !== "undefined"
-      ? document.documentElement.classList.contains("dark")
-      : true
-  );
-
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", isDark);
-    try {
-      localStorage.setItem("theme", isDark ? "dark" : "light");
-    } catch {}
-  }, [isDark]);
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem("theme");
-      if (saved) setIsDark(saved === "dark");
-      else setIsDark(true);
-    } catch {}
-  }, []);
-
+const ThemeToggle: React.FC<{ className?: string }> = ({ className }) => {
+  const { theme, toggle } = useTheme();
+  const isDark = theme === "dark";
   return (
-    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-      <span>Claro</span>
-      <Switch checked={isDark} onCheckedChange={setIsDark} />
-      <span>Escuro</span>
-    </div>
+    <button
+      type="button"
+      onClick={toggle}
+      className={
+        "inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm border-border hover:bg-secondary " +
+        (className || "")
+      }
+      aria-label="Alternar tema"
+      title="Alternar tema"
+    >
+      {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+      {isDark ? "Claro" : "Escuro"}
+    </button>
   );
-}
+};
+
+export default ThemeToggle;
