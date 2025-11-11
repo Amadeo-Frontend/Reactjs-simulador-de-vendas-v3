@@ -24,6 +24,19 @@ const Home: React.FC = () => {
           </p>
         </Link>
 
+        <Link
+          to="/produtos"
+          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
+        >
+          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Produtos</div>
+          <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">
+            Todos os Produtos
+          </h3>
+          <div className="text-xs text-muted-foreground">
+            Inserir, editar, excluir e exportar
+          </div>
+        </Link>
+
         <div className="p-5 border border-dashed rounded-xl border-border opacity-70">
           <div className="mb-2 text-sm text-muted-foreground">Em breve</div>
           <h3 className="mb-1 text-lg font-semibold">Nova ferramenta</h3>
