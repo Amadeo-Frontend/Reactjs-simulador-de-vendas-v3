@@ -1,7 +1,7 @@
 // components/Login.tsx
 import React, { useState } from "react";
 import { useTheme } from "../hooks/useTheme";
-import { Moon, Sun, Lock, Mail } from "lucide-react";
+import { Moon, Sun, Lock, User } from "lucide-react";
 import logo from "../images/logo.png";
 
 type Props = {
@@ -83,13 +83,13 @@ const Login: React.FC<Props> = ({ onLogin, api, logoSrc = "/images/logo.png", ti
                   Usuário
                 </label>
                 <div className="relative">
-                  <Mail className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
+                  <User className="absolute w-4 h-4 -translate-y-1/2 left-3 top-1/2 text-slate-400" />
                   <input
                     className="w-full py-2 pr-3 bg-white border rounded-md outline-none pl-9 border-slate-300 dark:border-slate-700 dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:ring-2 focus:ring-emerald-500/50"
                     value={username}
                     onChange={(e) => setU(e.target.value)}
                     autoComplete="username"
-                    placeholder="seu@email.com"
+                    placeholder="Nome do usuário"
                   />
                 </div>
               </div>

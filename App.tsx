@@ -1,6 +1,6 @@
 // App.tsx
-import React, { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import React, { useEffect, useRef, useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import { ThemeProvider } from "./hooks/useTheme";
 import { LoadingProvider, useLoading } from "./hooks/useLoading";
@@ -26,6 +26,18 @@ async function api(path: string, init?: RequestInit) {
   });
 }
 
+/* Redireciona para "/" somente na primeira renderização autenticada */
+const ForceHomeOnFirstAuth: React.FC = () => {
+  const loc = useLocation();
+  const alreadyForcedRef = useRef(false);
+
+  if (!alreadyForcedRef.current && loc.pathname !== "/") {
+    alreadyForcedRef.current = true;
+    return <Navigate to="/" replace />;
+  }
+  return null;
+};
+
 /* ============== App Shell ============== */
 const AppContent: React.FC = () => {
   const { show, hide } = useLoading();
@@ -46,12 +58,16 @@ const AppContent: React.FC = () => {
   }, [show, hide]);
 
   if (isLogged === null) return <div className="min-h-screen bg-background" />;
+
   if (!isLogged)
     return (
       <Login
-        onLogin={() => setIsLogged(true)}
+        onLogin={() => {
+          // Autenticou -> marca logado; Router montará e ForceHomeOnFirstAuth levará à "/"
+          setIsLogged(true);
+        }}
         api={api}
-        logoSrc="/logo.svg" // troque se precisar
+        logoSrc="/logo.svg"
         title="Dashboard Sulpet"
       />
     );
@@ -70,6 +86,9 @@ const AppContent: React.FC = () => {
     <BrowserRouter>
       <RouteChangeLoader />
       <Header onLogout={doLogout} />
+      {/* Garante que após o login a primeira rota seja "/" */}
+      <ForceHomeOnFirstAuth />
+
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/simulador" element={<MarginSimulator />} />

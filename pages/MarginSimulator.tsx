@@ -33,7 +33,8 @@ export interface SaleItem {
 
 /* ================= API helper (mesmo do app) ================= */
 const API_BASE =
-  import.meta.env.VITE_API_BASE || "https://server-simulador-de-vendas-v3.onrender.com";
+  import.meta.env.VITE_API_BASE ||
+  "https://server-simulador-de-vendas-v3.onrender.com";
 
 async function api(path: string, init?: RequestInit) {
   const url = `${API_BASE}${path}`;
@@ -54,7 +55,9 @@ async function api(path: string, init?: RequestInit) {
 
 /* ================= helpers ================= */
 const fmtBRL = (v: number) =>
-  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+    v
+  );
 
 function stampFilename(prefix = "simulacao-margem") {
   const now = new Date();
@@ -79,6 +82,12 @@ function pickUnitPrice(row: Partial<Product>, tier: Tier, mode: Mode): number {
   const key = priceKeyFor(tier, mode);
   const v = (row as any)?.[key];
   return typeof v === "number" && !Number.isNaN(v) ? v : 0;
+}
+
+/* ===== cores de margens (aplicadas no RESULTADO FINAL) ===== */
+function pctColor(pct: number, base: "bruta" | "liquida" = "bruta") {
+  if (pct < 0) return "text-red-500";
+  return base === "bruta" ? "text-emerald-600" : "text-amber-600";
 }
 
 /* ================= tipos locais ================= */
@@ -108,7 +117,9 @@ const ComboProduto: React.FC<{
   const [open, setOpen] = useState(false);
 
   const [sku, setSku] = useState<string>(value?.sku ?? "");
-  const [q, setQ] = useState<string>(value ? `${value.nome} • ${value.sku}` : "");
+  const [q, setQ] = useState<string>(
+    value ? `${value.nome} • ${value.sku}` : ""
+  );
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<Product[]>([]);
 
@@ -119,7 +130,8 @@ const ComboProduto: React.FC<{
 
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      if (ref.current && !ref.current.contains(e.target as Node))
+        setOpen(false);
     };
     const onEsc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
     window.addEventListener("mousedown", onClick);
@@ -140,7 +152,9 @@ const ComboProduto: React.FC<{
         arr = products.filter(
           (p) =>
             p.nome?.toLowerCase().includes(term) ||
-            String(p.sku || "").toLowerCase().includes(term)
+            String(p.sku || "")
+              .toLowerCase()
+              .includes(term)
         );
       }
       setResults(arr.slice(0, 10));
@@ -160,8 +174,16 @@ const ComboProduto: React.FC<{
     const s = raw.trim().toLowerCase();
     if (!s) return;
     const starts =
-      products.find((p) => String(p.sku || "").toLowerCase().startsWith(s)) ||
-      products.find((p) => String(p.sku || "").toLowerCase().includes(s));
+      products.find((p) =>
+        String(p.sku || "")
+          .toLowerCase()
+          .startsWith(s)
+      ) ||
+      products.find((p) =>
+        String(p.sku || "")
+          .toLowerCase()
+          .includes(s)
+      );
     if (starts) choose(starts);
   };
 
@@ -170,7 +192,9 @@ const ComboProduto: React.FC<{
       <div className="flex items-end gap-3">
         {/* SKU curto */}
         <div className="w-24 md:w-28">
-          <label className="block mb-1 text-xs text-muted-foreground">SKU</label>
+          <label className="block mb-1 text-xs text-muted-foreground">
+            SKU
+          </label>
           <input
             className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background min-h-10"
             placeholder="SKU"
@@ -201,9 +225,13 @@ const ComboProduto: React.FC<{
           {open && (
             <div className="absolute z-30 w-full mt-1 overflow-auto border rounded-md shadow max-h-64 border-border bg-background">
               {loading ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">Carregando…</div>
+                <div className="px-3 py-2 text-sm text-muted-foreground">
+                  Carregando…
+                </div>
               ) : results.length === 0 ? (
-                <div className="px-3 py-2 text-sm text-muted-foreground">Sem resultados</div>
+                <div className="px-3 py-2 text-sm text-muted-foreground">
+                  Sem resultados
+                </div>
               ) : (
                 results.map((p) => (
                   <button
@@ -311,7 +339,8 @@ const MarginSimulator: React.FC = () => {
     const custoFinal = cVendidos + cBonusProduto + bonusCashBRL;
     const lucroLiquido = receita - custoFinal;
 
-    const margemBrutaPct = receita > 0 ? ((receita - cVendidos) / receita) * 100 : 0;
+    const margemBrutaPct =
+      receita > 0 ? ((receita - cVendidos) / receita) * 100 : 0;
     const margemLiquidaPct = receita > 0 ? (lucroLiquido / receita) * 100 : 0;
 
     const bonificadoPP = margemBrutaPct - margemLiquidaPct;
@@ -347,32 +376,55 @@ const MarginSimulator: React.FC = () => {
     { receita: 0, cVendidos: 0, cBonusProduto: 0, cBonusCash: 0 }
   );
 
-  const custoFinalTotal = totals.cVendidos + totals.cBonusProduto + totals.cBonusCash;
+  const custoFinalTotal =
+    totals.cVendidos + totals.cBonusProduto + totals.cBonusCash;
   const lucroLiquidoTotal = totals.receita - custoFinalTotal;
 
   const margemBrutaTotalPct =
-    totals.receita > 0 ? ((totals.receita - totals.cVendidos) / totals.receita) * 100 : 0;
+    totals.receita > 0
+      ? ((totals.receita - totals.cVendidos) / totals.receita) * 100
+      : 0;
   const margemLiquidaTotalPct =
     totals.receita > 0 ? (lucroLiquidoTotal / totals.receita) * 100 : 0;
 
   const bonificadoTotalPP = margemBrutaTotalPct - margemLiquidaTotalPct;
   const percMargemConsumidaTotal =
-    margemBrutaTotalPct > 0 ? (bonificadoTotalPP / margemBrutaTotalPct) * 100 : 0;
+    margemBrutaTotalPct > 0
+      ? (bonificadoTotalPP / margemBrutaTotalPct) * 100
+      : 0;
+
+  /* ===== Exportar PDF sempre em modo claro ===== */
+  async function withLightMode<T>(fn: () => Promise<T>) {
+    const root = document.documentElement;
+    const hadDark = root.classList.contains("dark");
+    if (hadDark) root.classList.remove("dark");
+    try {
+      return await fn();
+    } finally {
+      if (hadDark) root.classList.add("dark");
+    }
+  }
 
   const exportPDF = async () => {
     const el = pdfRef.current;
     if (!el || !html2canvas || !jspdf) return;
-    const canvas = await html2canvas(el, { scale: 2, backgroundColor: "#0f172a" });
-    const img = canvas.toDataURL("image/png");
-    const { jsPDF } = jspdf;
-    const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
-    const pageW = pdf.internal.pageSize.getWidth();
-    const pageH = pdf.internal.pageSize.getHeight();
-    const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
-    const w = canvas.width * ratio;
-    const h = canvas.height * ratio;
-    pdf.addImage(img, "PNG", (pageW - w) / 2, (pageH - h) / 2, w, h);
-    pdf.save(stampFilename("simulacao-margem"));
+
+    await withLightMode(async () => {
+      const canvas = await html2canvas(el, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+      });
+      const img = canvas.toDataURL("image/png");
+      const { jsPDF } = jspdf;
+      const pdf = new jsPDF({ orientation: "p", unit: "pt", format: "a4" });
+      const pageW = pdf.internal.pageSize.getWidth();
+      const pageH = pdf.internal.pageSize.getHeight();
+      const ratio = Math.min(pageW / canvas.width, pageH / canvas.height);
+      const w = canvas.width * ratio;
+      const h = canvas.height * ratio;
+      pdf.addImage(img, "PNG", (pageW - w) / 2, (pageH - h) / 2, w, h);
+      pdf.save(stampFilename("simulacao-margem"));
+    });
   };
 
   return (
@@ -405,7 +457,9 @@ const MarginSimulator: React.FC = () => {
                   key={idx}
                   className={
                     "relative space-y-4 rounded-xl border p-4 " +
-                    (noPrice ? "border-red-300 dark:border-red-400/60" : "border-border")
+                    (noPrice
+                      ? "border-red-300 dark:border-red-400/60"
+                      : "border-border")
                   }
                 >
                   <span
@@ -456,9 +510,12 @@ const MarginSimulator: React.FC = () => {
                                       preco_venda_A: p.preco_venda_A ?? null,
                                       preco_venda_B: p.preco_venda_B ?? null,
                                       preco_venda_C: p.preco_venda_C ?? null,
-                                      preco_venda_A_prazo: p.preco_venda_A_prazo ?? null,
-                                      preco_venda_B_prazo: p.preco_venda_B_prazo ?? null,
-                                      preco_venda_C_prazo: p.preco_venda_C_prazo ?? null,
+                                      preco_venda_A_prazo:
+                                        p.preco_venda_A_prazo ?? null,
+                                      preco_venda_B_prazo:
+                                        p.preco_venda_B_prazo ?? null,
+                                      preco_venda_C_prazo:
+                                        p.preco_venda_C_prazo ?? null,
                                       // zera entradas
                                       quantity: 0,
                                       bonusQuantity: 0,
@@ -495,18 +552,25 @@ const MarginSimulator: React.FC = () => {
 
                     {/* seletores A/B/C + vista/prazo */}
                     <div className="md:col-span-5">
-                      <label className="block mb-1 text-sm">Preço de venda</label>
+                      <label className="block mb-1 text-xs text-muted-foreground">
+                        Preço de venda
+                      </label>
+
                       <div className="grid grid-cols-2 gap-2">
                         <select
                           className={
-                            "min-h-10 w-full rounded-md border px-3 py-2 outline-none " +
-                            (noPrice ? "border-red-400" : "border-input bg-background")
+                            "min-h-10 w-full rounded-md border px-3 py-2 text-sm outline-none " +
+                            (noPrice
+                              ? "border-red-400"
+                              : "border-input bg-background")
                           }
                           value={row.tier}
                           onChange={(e) =>
                             setRows((rs) =>
                               rs.map((r, i) =>
-                                i === idx ? { ...r, tier: e.target.value as Tier } : r
+                                i === idx
+                                  ? { ...r, tier: e.target.value as Tier }
+                                  : r
                               )
                             )
                           }
@@ -519,14 +583,18 @@ const MarginSimulator: React.FC = () => {
 
                         <select
                           className={
-                            "min-h-10 w-full rounded-md border px-3 py-2 outline-none " +
-                            (noPrice ? "border-red-400" : "border-input bg-background")
+                            "min-h-10 w-full rounded-md border px-3 py-2 text-sm outline-none " +
+                            (noPrice
+                              ? "border-red-400"
+                              : "border-input bg-background")
                           }
                           value={row.mode}
                           onChange={(e) =>
                             setRows((rs) =>
                               rs.map((r, i) =>
-                                i === idx ? { ...r, mode: e.target.value as Mode } : r
+                                i === idx
+                                  ? { ...r, mode: e.target.value as Mode }
+                                  : r
                               )
                             )
                           }
@@ -537,20 +605,23 @@ const MarginSimulator: React.FC = () => {
                         </select>
                       </div>
 
-                      <div className="h-4 text-xs">
+                      {/* helper com altura fixa para alinhar a linha toda */}
+                      <div className="flex items-center h-4 mt-1 text-xs text-muted-foreground">
                         {hasProduct ? (
                           noPrice ? (
                             <span className="text-amber-600 dark:text-amber-400">
-                              Não há preço cadastrado para <b>Faixa {row.tier}</b>{" "}
+                              Não há preço cadastrado para{" "}
+                              <b>Faixa {row.tier}</b>{" "}
                               {row.mode === "vista" ? "à vista" : "a prazo"}.
                             </span>
                           ) : (
-                            <span className="text-muted-foreground">
-                              Valor selecionado: <strong>{fmtBRL(unitPrice)}</strong>
-                            </span>
+                            <>
+                              Valor selecionado:{" "}
+                              <strong>{fmtBRL(unitPrice)}</strong>
+                            </>
                           )
                         ) : (
-                          <span className="text-muted-foreground">Selecione um produto.</span>
+                          <>Selecione um produto.</>
                         )}
                       </div>
                     </div>
@@ -561,42 +632,60 @@ const MarginSimulator: React.FC = () => {
                       <input
                         type="number"
                         min={0}
+                        placeholder="0"
                         className="w-full px-3 py-2 border rounded-md outline-none min-h-10 border-input bg-background disabled:opacity-60"
-                        value={row.quantity}
+                        value={row.quantity === 0 ? "" : row.quantity}
                         onChange={(e) =>
                           setRows((rs) =>
                             rs.map((r, i) =>
-                              i === idx ? { ...r, quantity: Number(e.target.value || 0) } : r
+                              i === idx
+                                ? {
+                                    ...r,
+                                    quantity: Number(e.target.value || 0),
+                                  }
+                                : r
                             )
                           )
                         }
                         disabled={!hasProduct || noPrice}
                       />
+
                       <div className="h-4" />
                     </div>
 
                     <div className="md:col-span-3">
-                      <label className="block mb-1 text-sm">Qtd. brinde (produto)</label>
+                      <label className="block mb-1 text-sm">
+                        Qtd. brinde (produto)
+                      </label>
                       <input
                         type="number"
                         min={0}
+                        placeholder="0"
                         className="w-full px-3 py-2 border rounded-md outline-none min-h-10 border-input bg-background disabled:opacity-60"
-                        value={row.bonusQuantity}
+                        value={row.bonusQuantity === 0 ? "" : row.bonusQuantity}
                         onChange={(e) =>
                           setRows((rs) =>
                             rs.map((r, i) =>
-                              i === idx ? { ...r, bonusQuantity: Number(e.target.value || 0) } : r
+                              i === idx
+                                ? {
+                                    ...r,
+                                    bonusQuantity: Number(e.target.value || 0),
+                                  }
+                                : r
                             )
                           )
                         }
                         disabled={!hasProduct || noPrice}
                       />
+
                       <div className="h-4" />
                     </div>
 
                     {/* custo readonly */}
                     <div className="md:col-span-3">
-                      <label className="block mb-1 text-sm">Custo unitário (R$)</label>
+                      <label className="block mb-1 text-sm">
+                        Custo unitário (R$)
+                      </label>
                       <input
                         type="text"
                         className="w-full px-3 py-2 border rounded-md outline-none cursor-not-allowed min-h-10 border-input bg-background opacity-80"
@@ -613,19 +702,25 @@ const MarginSimulator: React.FC = () => {
                         type="number"
                         min={0}
                         step="0.01"
+                        inputMode="decimal"
+                        placeholder="0,00"
                         className="w-full px-3 py-2 border rounded-md outline-none min-h-10 border-input bg-background disabled:opacity-60"
-                        value={row.bonusCashBRL ?? 0}
+                        value={row.bonusCashBRL === 0 ? "" : row.bonusCashBRL}
                         onChange={(e) =>
                           setRows((rs) =>
                             rs.map((r, i) =>
                               i === idx
-                                ? { ...r, bonusCashBRL: Number(e.target.value || 0) }
+                                ? {
+                                    ...r,
+                                    bonusCashBRL: Number(e.target.value || 0),
+                                  }
                                 : r
                             )
                           )
                         }
                         disabled={!hasProduct || noPrice}
                       />
+
                       <div className="h-4 text-xs text-muted-foreground">
                         Desconto/bonificação em dinheiro.
                       </div>
@@ -640,23 +735,41 @@ const MarginSimulator: React.FC = () => {
                         <>
                           <div>
                             <div className="text-muted-foreground">Receita</div>
-                            <div className="font-semibold">{fmtBRL(lc.receita)}</div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.receita)}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Custo vendidos</div>
-                            <div className="font-semibold">{fmtBRL(lc.cVendidos)}</div>
+                            <div className="text-muted-foreground">
+                              Custo vendidos
+                            </div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.cVendidos)}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Custo brinde</div>
-                            <div className="font-semibold">{fmtBRL(lc.cBonusProduto)}</div>
+                            <div className="text-muted-foreground">
+                              Custo brinde
+                            </div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.cBonusProduto)}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Bônus em R$</div>
-                            <div className="font-semibold">{fmtBRL(lc.bonusCashBRL)}</div>
+                            <div className="text-muted-foreground">
+                              Bônus em R$
+                            </div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.bonusCashBRL)}
+                            </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Lucro líquido</div>
-                            <div className="font-semibold">{fmtBRL(lc.lucroLiquido)}</div>
+                            <div className="text-muted-foreground">
+                              Lucro líquido
+                            </div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.lucroLiquido)}
+                            </div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">Margens</div>
@@ -665,8 +778,9 @@ const MarginSimulator: React.FC = () => {
                               {lc.margemLiquidaPct.toFixed(2)}%
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Bonificado: {lc.bonificadoPP.toFixed(2)} p.p. • Consome{" "}
-                              {lc.percMargemConsumida.toFixed(2)}% da margem bruta
+                              Bonificado: {lc.bonificadoPP.toFixed(2)} p.p. •
+                              Consome {lc.percMargemConsumida.toFixed(2)}% da
+                              margem bruta
                             </div>
                           </div>
                         </>
@@ -699,25 +813,40 @@ const MarginSimulator: React.FC = () => {
 
           {/* direita: resumo total (sticky) */}
           <div className="lg:col-span-5">
-            <div ref={pdfRef} className="p-5 border rounded-xl border-border lg:sticky lg:top-20">
+            <div
+              ref={pdfRef}
+              className="p-5 border rounded-xl border-border lg:sticky lg:top-20"
+            >
               <h2 className="mb-3 text-lg font-semibold">Resumo (Total)</h2>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
-                  <div className="text-muted-foreground">Receita (venda bruta)</div>
+                  <div className="text-muted-foreground">
+                    Receita (venda bruta)
+                  </div>
                   <div className="font-semibold">{fmtBRL(totals.receita)}</div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Custo dos vendidos</div>
-                  <div className="font-semibold">{fmtBRL(totals.cVendidos)}</div>
+                  <div className="text-muted-foreground">
+                    Custo dos vendidos
+                  </div>
+                  <div className="font-semibold">
+                    {fmtBRL(totals.cVendidos)}
+                  </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">Custo bônus (produto)</div>
-                  <div className="font-semibold">{fmtBRL(totals.cBonusProduto)}</div>
+                  <div className="text-muted-foreground">
+                    Custo bônus (produto)
+                  </div>
+                  <div className="font-semibold">
+                    {fmtBRL(totals.cBonusProduto)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">Bônus em R$</div>
-                  <div className="font-semibold">{fmtBRL(totals.cBonusCash)}</div>
+                  <div className="font-semibold">
+                    {fmtBRL(totals.cBonusCash)}
+                  </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">Custo final</div>
@@ -725,26 +854,56 @@ const MarginSimulator: React.FC = () => {
                 </div>
                 <div>
                   <div className="text-muted-foreground">Lucro líquido</div>
-                  <div className="font-semibold">{fmtBRL(lucroLiquidoTotal)}</div>
+                  <div
+                    className={
+                      "font-semibold " +
+                      (lucroLiquidoTotal < 0 ? "text-red-500" : "")
+                    }
+                  >
+                    {fmtBRL(lucroLiquidoTotal)}
+                  </div>
                 </div>
               </div>
 
+              {/* RESULTADO FINAL – números coloridos e vermelho se prejuízo */}
               <div className="grid gap-4 mt-4 sm:grid-cols-2">
                 <div>
                   <div className="text-muted-foreground">Margem bruta</div>
-                  <div className="font-semibold">{margemBrutaTotalPct.toFixed(2)}%</div>
+                  <div
+                    className={
+                      "text-lg font-bold " +
+                      pctColor(margemBrutaTotalPct, "bruta")
+                    }
+                  >
+                    {margemBrutaTotalPct.toFixed(2)}%
+                  </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">Margem líquida</div>
-                  <div className="font-semibold">{margemLiquidaTotalPct.toFixed(2)}%</div>
+                  <div
+                    className={
+                      "text-lg font-bold " +
+                      (margemLiquidaTotalPct < 0
+                        ? "text-red-500"
+                        : pctColor(margemLiquidaTotalPct, "liquida"))
+                    }
+                  >
+                    {margemLiquidaTotalPct.toFixed(2)}%
+                  </div>
                 </div>
                 <div>
                   <div className="text-muted-foreground">Bonificado (p.p.)</div>
-                  <div className="font-semibold">{bonificadoTotalPP.toFixed(2)} p.p.</div>
+                  <div className="font-semibold">
+                    {bonificadoTotalPP.toFixed(2)} p.p.
+                  </div>
                 </div>
                 <div>
-                  <div className="text-muted-foreground">% da margem bruta consumida</div>
-                  <div className="font-semibold">{percMargemConsumidaTotal.toFixed(2)}%</div>
+                  <div className="text-muted-foreground">
+                    % da margem bruta consumida
+                  </div>
+                  <div className="font-semibold">
+                    {percMargemConsumidaTotal.toFixed(2)}%
+                  </div>
                 </div>
               </div>
 

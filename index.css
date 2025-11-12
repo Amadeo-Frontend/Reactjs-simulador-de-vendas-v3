@@ -46,6 +46,8 @@
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
     --ring: 212.7 26.8% 83.9%;
+    --margem-bruta: #16a34a;
+    --margem-liquida: #f97316;
     color-scheme: dark;
   }
   * { @apply border-border; }
@@ -58,3 +60,21 @@ html { transition: background-color .3s, color .3s; }
 input::placeholder, textarea::placeholder { opacity: .85; }
 /* seleção */
 ::selection { background: hsl(var(--primary) / .25); }
+
+.badge-var{
+  display:inline-block;
+  padding:2px 8px;
+  border-radius:999px;
+  font-weight:600;
+  line-height:1.2;
+}
+.badge-bruta{
+  color:var(--margem-bruta);
+  background:color-mix(in oklab, var(--margem-bruta) 16%, white);
+  border:1px solid color-mix(in oklab, var(--margem-bruta) 36%, white);
+}
+.badge-liquida{
+  color:var(--margem-liquida);
+  background:color-mix(in oklab, var(--margem-liquida) 16%, white);
+  border:1px solid color-mix(in oklab, var(--margem-liquida) 36%, white);
+}
