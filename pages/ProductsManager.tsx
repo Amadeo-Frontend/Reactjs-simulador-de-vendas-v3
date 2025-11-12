@@ -13,6 +13,7 @@ import {
   Upload,
   CheckCircle2,
   AlertTriangle,
+  ArrowUp,
 } from "lucide-react";
 
 /* ===== API helper (envia credentials) ===== */
@@ -30,7 +31,6 @@ async function api(path: string, init?: RequestInit) {
         : { ...(init?.headers || {}) },
     ...init,
   });
-    // não faz throw automático aqui; quem chama decide
   return r;
 }
 
@@ -69,6 +69,175 @@ const money = (n?: number | null) =>
   typeof n === "number"
     ? n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
     : "—";
+
+/** Timestamp para nomes de arquivos */
+const ts = () => {
+  const d = new Date();
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(
+    d.getHours()
+  )}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+};
+
+/** ======== Exportadores (CLIENTE) ======== */
+function productsToCSV(rows: Product[]) {
+  const header = [
+    "id",
+    "sku",
+    "nome",
+    "peso",
+    "preco_venda_A",
+    "preco_venda_A_prazo",
+    "preco_venda_B",
+    "preco_venda_B_prazo",
+    "preco_venda_C",
+    "preco_venda_C_prazo",
+    "custo",
+    "bonificacao_unitaria",
+  ];
+  const esc = (v: any) => {
+    if (v === null || v === undefined) return "";
+    const s = String(v).replace(/"/g, '""');
+    return `"${s}"`;
+  };
+  const lines = rows.map((p) =>
+    [
+      p.id,
+      p.sku,
+      p.nome,
+      p.peso,
+      p.preco_venda_A,
+      p.preco_venda_A_prazo,
+      p.preco_venda_B,
+      p.preco_venda_B_prazo,
+      p.preco_venda_C,
+      p.preco_venda_C_prazo,
+      p.custo,
+      p.bonificacao_unitaria,
+    ]
+      .map(esc)
+      .join(",")
+  );
+  return [header.join(","), ...lines].join("\n");
+}
+
+function downloadText(filename: string, text: string, mime = "text/plain") {
+  const blob = new Blob([text], { type: `${mime};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function openPrintableHTML(rows: Product[], stamp: string) {
+  const css = `
+    :root{
+      --bg:#0b1220; --card:#0e1627; --muted:#94a3b8; --border:#1f2a44;
+      --head:#e2e8f0; --green:#053d2f; --green-soft:#e7fbf3;
+      --yellow:#3d3005; --yellow-soft:#fff7e6; --sky:#0ea5e9;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:#e5e7eb;font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+    .wrap{max-width:1200px;margin:16px auto;padding:0 12px}
+    h1{margin:0 0 6px 0;font-size:22px}
+    .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
+    .table-scroll{overflow:auto;border:1px solid var(--border);border-radius:12px;background:var(--card)}
+    table{width:100%;border-collapse:separate;border-spacing:0;min-width:920px}
+    thead th{position:sticky;top:0;z-index:2;background:#0f1930;color:var(--head);text-align:left;font-size:12px;letter-spacing:.02em}
+    th,td{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.06)}
+    tbody tr:nth-child(even){background-color:rgba(255,255,255,.02)}
+    .num{text-align:right}
+    .center{text-align:center}
+    .w90{width:90px}
+    .w110{width:110px}
+    .badge{display:inline-block;padding:2px 8px;border-radius:999px;background:#1f2a44;color:#cbd5e1;font-size:12px;margin-left:8px}
+    .pill{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;margin-right:6px;border:1px solid #1f2a44;color:#cbd5e1}
+    .a{background:var(--green-soft)}
+    .a th,.a td{background:var(--green-soft)}
+    .c{background:var(--yellow-soft)}
+    .c th,.c td{background:var(--yellow-soft)}
+    /* em telas estreitas: mantemos o scroll horizontal da .table-scroll */
+    @media print{
+      .table-scroll{overflow:visible}
+    }
+  `;
+
+  const fmt = (n?: number | null) =>
+    typeof n === "number"
+      ? n.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+      : "—";
+
+  const head = `
+    <thead>
+      <tr>
+        <th class="w90">ID</th>
+        <th class="w110">SKU</th>
+        <th>Produto</th>
+        <th class="w90">Peso</th>
+        <th class="center w110">À vista A</th>
+        <th class="center w110">Prazo A</th>
+        <th class="center w110">À vista B</th>
+        <th class="center w110">Prazo B</th>
+        <th class="center w110">À vista C</th>
+        <th class="center w110">Prazo C</th>
+        <th class="num w110">Custo</th>
+      </tr>
+    </thead>`;
+
+  const body = rows
+    .map(
+      (p) => `
+      <tr>
+        <td>${p.id}</td>
+        <td>${p.sku}</td>
+        <td>${p.nome}</td>
+        <td class="center">${p.peso ?? "—"}</td>
+        <td class="center a">${fmt(p.preco_venda_A)}</td>
+        <td class="center a">${fmt(p.preco_venda_A_prazo)}</td>
+        <td class="center">${fmt(p.preco_venda_B)}</td>
+        <td class="center">${fmt(p.preco_venda_B_prazo)}</td>
+        <td class="center c">${fmt(p.preco_venda_C)}</td>
+        <td class="center c">${fmt(p.preco_venda_C_prazo)}</td>
+        <td class="num" style="color:#7dd3fc">${fmt(p.custo)}</td>
+      </tr>`
+    )
+    .join("");
+
+  const gerado = new Date().toLocaleString("pt-BR");
+
+  const html = `<!doctype html>
+  <html lang="pt-BR">
+    <head>
+      <meta charset="utf-8"/>
+      <meta name="viewport" content="width=device-width, initial-scale=1"/>
+      <title>Produtos_${stamp}</title>
+      <style>${css}</style>
+    </head>
+    <body>
+      <div class="wrap">
+        <h1>Produtos visíveis <span class="badge">${rows.length}</span></h1>
+        <div class="meta">Gerado em: ${gerado} • Arquivo: produtos_${stamp}.html</div>
+        <div class="table-scroll">
+          <table>
+            ${head}
+            <tbody>${body}</tbody>
+          </table>
+        </div>
+      </div>
+      <script>window.onload=()=>window.print&&window.print()</script>
+    </body>
+  </html>`;
+
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `produtos_${stamp}.html`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 /* ========= Formulário (Add/Edit) ========= */
 function ProductForm({
@@ -256,7 +425,6 @@ function ProductForm({
             {...bind("custo")}
           />
         </div>
-        {/* Mantemos bonificação no formulário (para simulador), mas não na listagem */}
         <div className="col-span-3">
           <Label>Bonificação unitária (R$)</Label>
           <input
@@ -328,7 +496,6 @@ const ProductsManagement: React.FC = () => {
 
     if (!sku || !nome) return null;
 
-    // converte strings numéricas para number/null
     const num = (v: any) =>
       v === "" || v === undefined ? null : typeof v === "number" ? v : Number(v);
 
@@ -344,7 +511,7 @@ const ProductsManagement: React.FC = () => {
       preco_venda_C_prazo: num(preco_venda_C_prazo),
       custo: num(custo),
       bonificacao_unitaria: num(bonificacao_unitaria),
-      ...rest, // se vierem campos extras, o backend deve ignorar
+      ...rest,
     };
     return draft;
   };
@@ -354,7 +521,7 @@ const ProductsManagement: React.FC = () => {
     setLogs([]);
     try {
       parsed = JSON.parse(jsonText);
-    } catch (e) {
+    } catch {
       alert("JSON inválido. Verifique a sintaxe.");
       return;
     }
@@ -368,7 +535,6 @@ const ProductsManagement: React.FC = () => {
       return;
     }
 
-    // normaliza e filtra inválidos
     const drafts = arr.map(normalizeItem).filter(Boolean) as Draft[];
     if (!drafts.length) {
       alert("Nenhum item válido encontrado (precisa ter ao menos sku e nome).");
@@ -404,12 +570,10 @@ const ProductsManagement: React.FC = () => {
       done++;
       setProgress({ done, total: drafts.length, ok, fail });
 
-      // evita flood (free tier)
       await new Promise((res) => setTimeout(res, 60));
     }
 
     setImporting(false);
-    // Recarrega a tabela
     await load();
   };
 
@@ -466,34 +630,19 @@ const ProductsManagement: React.FC = () => {
     }
   };
 
-  async function downloadCSV() {
+  // Exportações visíveis (cliente)
+  function handleCSVVisible() {
     try {
-      const r = await api("/api/products/export.csv");
-      if (!r.ok) throw new Error(await r.text());
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "produtos.csv";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
+      const csv = productsToCSV(filtered);
+      downloadText(`produtos_${ts()}.csv`, csv, "text/csv");
+    } catch {
       alert("Falha ao gerar CSV");
     }
   }
-
-  async function downloadHTML() {
+  function handleHTMLVisible() {
     try {
-      const r = await api("/api/products/export.html");
-      if (!r.ok) throw new Error(await r.text());
-      const blob = await r.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "produtos.html";
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (e) {
+      openPrintableHTML(filtered, ts());
+    } catch {
       alert("Falha ao gerar HTML");
     }
   }
@@ -501,31 +650,36 @@ const ProductsManagement: React.FC = () => {
   return (
     <div className="container px-4 py-6 mx-auto">
       <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold">Gerenciar Produtos</h1>
+        <div className="flex items-center gap-2">
+          <h1 className="text-2xl font-bold">Gerenciar Produtos</h1>
+          <span className="px-2 py-0.5 text-xs rounded-full bg-slate-800 text-slate-200 border border-slate-700">
+            {filtered.length} visíveis
+          </span>
+        </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <button
-            onClick={downloadCSV}
+            onClick={handleCSVVisible}
             className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md border-border hover:bg-secondary"
           >
             <Download className="w-4 h-4" />
             CSV
           </button>
           <button
-            onClick={downloadHTML}
+            onClick={handleHTMLVisible}
             className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded-md border-border hover:bg-secondary"
           >
             <FileText className="w-4 h-4" />
             HTML / Imprimir
           </button>
 
-            <button
-              onClick={() => setShowImport(true)}
-              className="inline-flex items-center gap-2 px-3 py-2 text-sm text-indigo-300 border border-indigo-400 rounded-md hover:bg-indigo-500/10"
-            >
-              <Upload className="w-4 h-4" />
-              Importar JSON
-            </button>
+          <button
+            onClick={() => setShowImport(true)}
+            className="inline-flex items-center gap-2 px-3 py-2 text-sm text-indigo-300 border border-indigo-400 rounded-md hover:bg-indigo-500/10"
+          >
+            <Upload className="w-4 h-4" />
+            Importar JSON
+          </button>
 
           <button
             onClick={async () => {
@@ -612,11 +766,11 @@ const ProductsManagement: React.FC = () => {
                 <th className="text-center w-[120px] text-emerald-300">À vista A</th>
                 <th className="text-center w-[120px] text-emerald-300/80">Prazo A</th>
 
-                <th className="text-center w-[120px] text-emerald-300">À vista B</th>
-                <th className="text-center w-[120px] text-emerald-300/80">Prazo B</th>
+                <th className="text-center w-[120px]">À vista B</th>
+                <th className="text-center w-[120px]">Prazo B</th>
 
-                <th className="text-center w-[120px] text-emerald-300">À vista C</th>
-                <th className="text-center w-[120px] text-emerald-300/80">Prazo C</th>
+                <th className="text-center w-[120px] text-amber-300">À vista C</th>
+                <th className="text-center w-[120px] text-amber-300/80">Prazo C</th>
 
                 <th className="text-right w-[120px] text-sky-300">Custo</th>
                 <th className="w-[140px]"></th>
@@ -645,13 +799,19 @@ const ProductsManagement: React.FC = () => {
 
                     {/* A */}
                     <td className="px-3 py-2 text-center">{money(p.preco_venda_A)}</td>
-                    <td className="px-3 py-2 text-center">{money(p.preco_venda_A_prazo)}</td>
+                    <td className="px-3 py-2 text-center">
+                      {money(p.preco_venda_A_prazo)}
+                    </td>
                     {/* B */}
                     <td className="px-3 py-2 text-center">{money(p.preco_venda_B)}</td>
-                    <td className="px-3 py-2 text-center">{money(p.preco_venda_B_prazo)}</td>
+                    <td className="px-3 py-2 text-center">
+                      {money(p.preco_venda_B_prazo)}
+                    </td>
                     {/* C */}
                     <td className="px-3 py-2 text-center">{money(p.preco_venda_C)}</td>
-                    <td className="px-3 py-2 text-center">{money(p.preco_venda_C_prazo)}</td>
+                    <td className="px-3 py-2 text-center">
+                      {money(p.preco_venda_C_prazo)}
+                    </td>
 
                     <td className="px-3 py-2 text-right text-sky-300">{money(p.custo)}</td>
 
@@ -744,22 +904,22 @@ const ProductsManagement: React.FC = () => {
                 </div>
 
                 <div className="p-2 border rounded-md border-emerald-600/30">
-                  <div className="text-[11px] text-emerald-300">À vista B</div>
+                  <div className="text-[11px]">À vista B</div>
                   <div className="text-sm font-medium">{money(p.preco_venda_B)}</div>
                 </div>
                 <div className="p-2 border rounded-md border-emerald-600/20">
-                  <div className="text-[11px] text-emerald-300/80">Prazo B</div>
+                  <div className="text-[11px]">Prazo B</div>
                   <div className="text-sm font-medium">
                     {money(p.preco_venda_B_prazo)}
                   </div>
                 </div>
 
-                <div className="p-2 border rounded-md border-emerald-600/30">
-                  <div className="text-[11px] text-emerald-300">À vista C</div>
+                <div className="p-2 border rounded-md border-amber-500/30">
+                  <div className="text-[11px] text-amber-300">À vista C</div>
                   <div className="text-sm font-medium">{money(p.preco_venda_C)}</div>
                 </div>
-                <div className="p-2 border rounded-md border-emerald-600/20">
-                  <div className="text-[11px] text-emerald-300/80">Prazo C</div>
+                <div className="p-2 border rounded-md border-amber-500/20">
+                  <div className="text-[11px] text-amber-300/80">Prazo C</div>
                   <div className="text-sm font-medium">
                     {money(p.preco_venda_C_prazo)}
                   </div>
@@ -782,15 +942,22 @@ const ProductsManagement: React.FC = () => {
         tratados como <em>null</em>.
       </p>
 
+      {/* Botão "Top" flutuante */}
+      <button
+        onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+        title="Voltar ao topo"
+        className="fixed z-40 inline-flex items-center justify-center w-10 h-10 border rounded-full shadow-lg bottom-6 right-6 bg-slate-800 hover:bg-slate-700 border-slate-600"
+      >
+        <ArrowUp className="w-5 h-5 text-slate-100" />
+      </button>
+
       {/* ===== IMPORT MODAL ===== */}
       {showImport && (
         <div className="fixed inset-0 z-50 flex items-end justify-center sm:items-center">
-          {/* backdrop */}
           <div
             className="absolute inset-0 bg-black/50"
             onClick={() => !importing && setShowImport(false)}
           />
-          {/* content */}
           <div className="relative w-full p-4 border sm:max-w-3xl bg-card border-border rounded-t-2xl sm:rounded-xl sm:p-5">
             <div className="flex items-center justify-between mb-3">
               <div className="flex items-center gap-2">

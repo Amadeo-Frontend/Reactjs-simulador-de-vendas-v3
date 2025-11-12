@@ -7,8 +7,11 @@ export default defineConfig({
     port: 3000,
     host: '0.0.0.0',
     proxy: {
-      // tudo que for /api vai para o servidor Express (localhost:4000)
-      '/api': 'http://localhost:4000'
+     
+      '/api': {
+        target: "http://localhost:8000",
+        changeOrigin: true,
+      },
     }
   },
   plugins: [react()],
