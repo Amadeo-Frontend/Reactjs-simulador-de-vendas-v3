@@ -1,12 +1,12 @@
 // App.tsx
-import React, { useEffect, useRef, useState } from "react";
-import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { ThemeProvider } from "./hooks/useTheme";
 import { LoadingProvider, useLoading } from "./hooks/useLoading";
 import LoadingOverlay from "./components/LoadingOverlay";
 import RouteChangeLoader from "./components/RouteChangeLoader";
-
+import logo from "./images/logo.png";
 import Header from "./components/Header";
 import Home from "./pages/Home";
 import MarginSimulator from "./pages/MarginSimulator";
@@ -25,18 +25,6 @@ async function api(path: string, init?: RequestInit) {
     ...init,
   });
 }
-
-/* Redireciona para "/" somente na primeira renderização autenticada */
-const ForceHomeOnFirstAuth: React.FC = () => {
-  const loc = useLocation();
-  const alreadyForcedRef = useRef(false);
-
-  if (!alreadyForcedRef.current && loc.pathname !== "/") {
-    alreadyForcedRef.current = true;
-    return <Navigate to="/" replace />;
-  }
-  return null;
-};
 
 /* ============== App Shell ============== */
 const AppContent: React.FC = () => {
@@ -58,16 +46,12 @@ const AppContent: React.FC = () => {
   }, [show, hide]);
 
   if (isLogged === null) return <div className="min-h-screen bg-background" />;
-
   if (!isLogged)
     return (
       <Login
-        onLogin={() => {
-          // Autenticou -> marca logado; Router montará e ForceHomeOnFirstAuth levará à "/"
-          setIsLogged(true);
-        }}
+        onLogin={() => setIsLogged(true)}
         api={api}
-        logoSrc="/logo.svg"
+        logoSrc={logo}
         title="Dashboard Sulpet"
       />
     );
@@ -86,9 +70,6 @@ const AppContent: React.FC = () => {
     <BrowserRouter>
       <RouteChangeLoader />
       <Header onLogout={doLogout} />
-      {/* Garante que após o login a primeira rota seja "/" */}
-      <ForceHomeOnFirstAuth />
-
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/simulador" element={<MarginSimulator />} />
