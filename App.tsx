@@ -11,6 +11,7 @@ import Header from "./components/Header";
 import Home from "./pages/Home";
 import MarginSimulator from "./pages/MarginSimulator";
 import ProductsManagement from "./pages/ProductsManager";
+import SalesManager from "./pages/SalesManager";
 import Login from "./components/Login";
 
 /* ============== API helper ============== */
@@ -74,6 +75,7 @@ const AppContent: React.FC = () => {
         <Route path="/" element={<Home />} />
         <Route path="/simulador" element={<MarginSimulator />} />
         <Route path="/produtos" element={<ProductsManagement />} />
+        <Route path="/vendas" element={<SalesManager />} />
       </Routes>
     </BrowserRouter>
   );

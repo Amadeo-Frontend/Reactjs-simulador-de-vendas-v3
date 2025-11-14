@@ -36,6 +36,18 @@ const Home: React.FC = () => {
             Inserir, editar, excluir e exportar
           </div>
         </Link>
+        <Link
+          to="/vendas"
+          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
+        >
+          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Vendas</div>
+          <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">
+            Todos os Vendas
+          </h3>
+          <div className="text-xs text-muted-foreground">
+            Onde apareçem todas as vendas criadas no simulador de margens.
+          </div>
+        </Link>
 
         <div className="p-5 border border-dashed rounded-xl border-border opacity-70">
           <div className="mb-2 text-sm text-muted-foreground">Em breve</div>
