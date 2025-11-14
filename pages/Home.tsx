@@ -1,7 +1,16 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { Calculator, PackageSearch, ReceiptText, Rocket } from "lucide-react";
 
 const Home: React.FC = () => {
+  const card =
+    "group rounded-xl border border-border bg-card p-5 shadow transition hover:border-accent-foreground hover:shadow-md";
+
+  const titleRow =
+    "mb-1 flex items-center gap-2 text-lg font-semibold transition-colors group-hover:text-primary";
+
+  const iconCls = "h-5 w-5 text-indigo-400";
+
   return (
     <div className="container py-8 mx-auto space-y-8">
       <header>
@@ -9,49 +18,50 @@ const Home: React.FC = () => {
         <p className="text-muted-foreground">Escolha uma ferramenta abaixo.</p>
       </header>
 
-      {/* Só os cards (sem “Central de Relatórios”) */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        <Link
-          to="/simulador"
-          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
-        >
+        {/* Simulador */}
+        <Link to="/simulador" className={card}>
           <div className="mb-2 text-sm text-muted-foreground">Vendas</div>
-          <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">
-            Simulador de Margem
-          </h3>
+          <div className={titleRow}>
+            <Calculator className={iconCls} />
+            <span>Simulador de Margem</span>
+          </div>
           <p className="text-sm text-muted-foreground">
-            Calcule margem por preço A/B/C/D, com bonificação unitária e em R$.
+            Calcule margem por faixa (A/B/C), com bonificação unitária e em R$.
           </p>
         </Link>
 
-        <Link
-          to="/produtos"
-          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
-        >
+        {/* Produtos */}
+        <Link to="/produtos" className={card}>
           <div className="mb-2 text-sm text-muted-foreground">Gerenciar Produtos</div>
-          <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">
-            Todos os Produtos
-          </h3>
-          <div className="text-xs text-muted-foreground">
-            Inserir, editar, excluir e exportar
+          <div className={titleRow}>
+            <PackageSearch className={iconCls} />
+            <span>Todos os Produtos</span>
           </div>
-        </Link>
-        <Link
-          to="/vendas"
-          className="p-5 transition border shadow group rounded-xl border-border bg-card hover:shadow-md hover:border-accent-foreground"
-        >
-          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Vendas</div>
-          <h3 className="mb-1 text-lg font-semibold transition-colors group-hover:text-primary">
-            Todos os Vendas
-          </h3>
-          <div className="text-xs text-muted-foreground">
-            Onde apareçem todas as vendas criadas no simulador de margens.
-          </div>
+          <p className="text-sm text-muted-foreground">
+            Inserir, editar, excluir e exportar.
+          </p>
         </Link>
 
-        <div className="p-5 border border-dashed rounded-xl border-border opacity-70">
+        {/* Vendas */}
+        <Link to="/vendas" className={card}>
+          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Vendas</div>
+          <div className={titleRow}>
+            <ReceiptText className={iconCls} />
+            <span>Todas as Vendas</span>
+          </div>
+          <p className="text-sm text-muted-foreground">
+            Listagem das vendas criadas no simulador.
+          </p>
+        </Link>
+
+        {/* Em breve */}
+        <div className="p-5 border border-dashed rounded-xl border-border opacity-80">
           <div className="mb-2 text-sm text-muted-foreground">Em breve</div>
-          <h3 className="mb-1 text-lg font-semibold">Nova ferramenta</h3>
+          <div className={titleRow}>
+            <Rocket className={iconCls} />
+            <span>Nova ferramenta</span>
+          </div>
           <p className="text-sm text-muted-foreground">Em construção…</p>
         </div>
       </div>
