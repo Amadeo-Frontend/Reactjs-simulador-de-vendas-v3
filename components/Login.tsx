@@ -11,7 +11,7 @@ type Props = {
   title?: string;
 };
 
-const Login: React.FC<Props> = ({ onLogin, api, logoSrc = "/images/logo.png", title = "Dashboard Sulpet" }) => {
+const Login: React.FC<Props> = ({ onLogin, api, logoSrc = "/images/logo.png", title = "Sulpet" }) => {
   const { theme, toggleTheme } = useTheme();
 
   const [username, setU] = useState("");

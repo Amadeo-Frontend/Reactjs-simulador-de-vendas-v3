@@ -17,9 +17,8 @@ const Home: React.FC = () => {
         <h1 className="text-2xl font-bold">Ferramentas</h1>
         <p className="text-muted-foreground">Escolha uma ferramenta abaixo.</p>
       </header>
-
+      {/* Simulador */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-        {/* Simulador */}
         <Link to="/simulador" className={card}>
           <div className="mb-2 text-sm text-muted-foreground">Vendas</div>
           <div className={titleRow}>
@@ -33,7 +32,9 @@ const Home: React.FC = () => {
 
         {/* Produtos */}
         <Link to="/produtos" className={card}>
-          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Produtos</div>
+          <div className="mb-2 text-sm text-muted-foreground">
+            Gerenciar Produtos
+          </div>
           <div className={titleRow}>
             <PackageSearch className={iconCls} />
             <span>Todos os Produtos</span>
@@ -45,7 +46,9 @@ const Home: React.FC = () => {
 
         {/* Vendas */}
         <Link to="/vendas" className={card}>
-          <div className="mb-2 text-sm text-muted-foreground">Gerenciar Vendas</div>
+          <div className="mb-2 text-sm text-muted-foreground">
+            Gerenciar Vendas
+          </div>
           <div className={titleRow}>
             <ReceiptText className={iconCls} />
             <span>Todas as Vendas</span>

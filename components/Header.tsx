@@ -31,7 +31,7 @@ const Header: React.FC<HeaderProps> = ({ onLogout }) => {
               className="w-8 h-8 rounded-full shadow-sm"
             />
             <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">
-              Hub Sulpet
+              Sulpet
             </h1>
           </div>
 
