@@ -85,7 +85,9 @@ function displayOptionLabel(p: Partial<Product>, tier: Tier, mode: Mode) {
   const v = (p as any)?.[key];
   const price =
     typeof v === "number" && !Number.isNaN(v) ? fmtBRL(v) : "(sem preço)";
-  return `Faixa ${tier} • ${mode === "vista" ? "à vista" : "a prazo"} — ${price}`;
+  return `Faixa ${tier} • ${
+    mode === "vista" ? "à vista" : "a prazo"
+  } — ${price}`;
 }
 
 function getPrice(p: Partial<Product>, tier: Tier, mode: Mode): number {
@@ -273,6 +275,9 @@ const MarginSimulator: React.FC = () => {
   const rowRefs = useRef<HTMLDivElement[]>([]);
   const navigate = useNavigate();
 
+  // nome da empresa do cliente (manual)
+  const [clientCompany, setClientCompany] = useState<string>("");
+
   // produtos
   const [products, setProducts] = useState<Product[]>([]);
   const [prodLoading, setProdLoading] = useState(true);
@@ -439,6 +444,7 @@ const MarginSimulator: React.FC = () => {
       .wrap{max-width:960px;margin:24px auto;padding:0 16px}
       h1{margin:0 0 6px 0;font-size:18px}
       .meta{color:var(--muted);font-size:12px;margin-bottom:12px}
+      .meta div{margin-bottom:2px}
       table{width:100%;border-collapse:collapse}
       th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left}
       thead th{font-size:12px;color:#334155;background:#f8fafc}
@@ -465,7 +471,7 @@ const MarginSimulator: React.FC = () => {
         const unit = c.unitPrice;
         return `
           <tr>
-            <td>${r.nome ? r.nome.replace(/</g,"&lt;") : "-"}</td>
+            <td>${r.nome ? r.nome.replace(/</g, "&lt;") : "-"}</td>
             <td class="center">${r.sku || "-"}</td>
             <td class="center"><span class="pill">${faixa}</span></td>
             <td class="right">${fmtBRL(unit)}</td>
@@ -478,6 +484,11 @@ const MarginSimulator: React.FC = () => {
       })
       .join("");
 
+    const safeCompany =
+      clientCompany && clientCompany.trim().length > 0
+        ? clientCompany.replace(/</g, "&lt;")
+        : "";
+
     const html = `<!doctype html>
     <html lang="pt-BR">
       <head>
@@ -489,10 +500,12 @@ const MarginSimulator: React.FC = () => {
       <body>
         <div class="wrap">
           <h1>Simulação de Venda (Comprovante)</h1>
-          <div class="meta">Gerado em ${new Date().toLocaleString(
-            "pt-BR"
-          )} — Arquivo: ${printStamp("comprovante")}.html</div>
-
+         <div class="meta">
+         ${safeCompany ? `<div>Empresa cliente: ${safeCompany}</div>` : ""}
+         <div>Gerado em ${new Date().toLocaleString("pt-BR")} — Arquivo: ${printStamp(
+        "comprovante"
+         )}.html</div>
+       </div>
           <table>
             <thead>
               <tr>
@@ -612,6 +625,8 @@ const MarginSimulator: React.FC = () => {
           brutaPct: margemBrutaTotalPct,
           liquidaPct: margemLiquidaTotalPct,
         },
+        // se quiser salvar o nome da empresa no futuro, pode incluir aqui:
+        // clientCompany,
       };
 
       await api("/api/sales", { method: "POST", body: JSON.stringify(body) });
@@ -824,7 +839,11 @@ const MarginSimulator: React.FC = () => {
                           onChange={(e) => {
                             const raw = e.target.value.replace(",", ".").trim();
                             const n =
-                              raw === "" ? null : Number.isFinite(+raw) ? +raw : null;
+                              raw === ""
+                                ? null
+                                : Number.isFinite(+raw)
+                                ? +raw
+                                : null;
                             setRows((rs) =>
                               rs.map((r, i) =>
                                 i === idx
@@ -845,7 +864,8 @@ const MarginSimulator: React.FC = () => {
                         {hasProduct ? (
                           noPrice ? (
                             <span className="text-amber-600 dark:text-amber-400">
-                              Defina um preço manual ou selecione uma faixa com preço.
+                              Defina um preço manual ou selecione uma faixa com
+                              preço.
                             </span>
                           ) : (
                             <>
@@ -881,7 +901,10 @@ const MarginSimulator: React.FC = () => {
                           setRows((rs) =>
                             rs.map((r, i) =>
                               i === idx
-                                ? { ...r, quantity: Number(e.target.value || 0) }
+                                ? {
+                                    ...r,
+                                    quantity: Number(e.target.value || 0),
+                                  }
                                 : r
                             )
                           )
@@ -971,7 +994,9 @@ const MarginSimulator: React.FC = () => {
                         <>
                           <div>
                             <div className="text-muted-foreground">Receita</div>
-                            <div className="font-semibold">{fmtBRL(lc.receita)}</div>
+                            <div className="font-semibold">
+                              {fmtBRL(lc.receita)}
+                            </div>
                           </div>
                           <div>
                             <div className="text-muted-foreground">
@@ -990,13 +1015,17 @@ const MarginSimulator: React.FC = () => {
                             </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Bônus em R$</div>
+                            <div className="text-muted-foreground">
+                              Bônus em R$
+                            </div>
                             <div className="font-semibold">
                               {fmtBRL(lc.bonusCashBRL)}
                             </div>
                           </div>
                           <div>
-                            <div className="text-muted-foreground">Lucro líquido</div>
+                            <div className="text-muted-foreground">
+                              Lucro líquido
+                            </div>
                             <div className="font-semibold">
                               {fmtBRL(lc.lucroLiquido)}
                             </div>
@@ -1008,8 +1037,9 @@ const MarginSimulator: React.FC = () => {
                               {lc.margemLiquidaPct.toFixed(2)}%
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              Bonificado: {lc.bonificadoPP.toFixed(2)} p.p. • Consome{" "}
-                              {lc.percMargemConsumida.toFixed(2)}% da margem bruta
+                              Bonificado: {lc.bonificadoPP.toFixed(2)} p.p. •
+                              Consome {lc.percMargemConsumida.toFixed(2)}% da
+                              margem bruta
                             </div>
                           </div>
                         </>
@@ -1042,6 +1072,23 @@ const MarginSimulator: React.FC = () => {
 
           {/* direita: resumo + ações */}
           <div className="lg:col-span-5">
+            {/* input para nome da empresa do cliente */}
+            <div className="mb-4">
+              <label className="block mb-1 text-sm">
+                Nome da empresa do cliente
+              </label>
+              <input
+                type="text"
+                placeholder="Empresa que está comprando as rações"
+                className="w-full px-3 py-2 border rounded-md outline-none border-input bg-background"
+                value={clientCompany}
+                onChange={(e) => setClientCompany(e.target.value)}
+              />
+              <p className="mt-1 text-xs text-muted-foreground">
+                Esse nome aparece no comprovante e no PDF da simulação.
+              </p>
+            </div>
+
             <div className="flex flex-col gap-2 mb-2 sm:flex-row sm:items-center sm:justify-end">
               <button
                 onClick={saveAndPrint}
@@ -1062,6 +1109,15 @@ const MarginSimulator: React.FC = () => {
               className="p-5 border rounded-xl border-border lg:sticky lg:top-20 bg-background"
             >
               <h2 className="mb-3 text-lg font-semibold">Resumo (Total)</h2>
+
+              {clientCompany && (
+                <div className="mb-3 text-sm">
+                  <span className="text-muted-foreground">
+                    Empresa cliente:{" "}
+                  </span>
+                  <span className="font-semibold">{clientCompany}</span>
+                </div>
+              )}
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div>
